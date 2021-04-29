@@ -16,6 +16,7 @@ export type Room = {
   listWords: () => Word[];
   retrieveUser: (userId: string) => User | undefined;
   retrieveWord: (wordId: string) => Word | undefined;
+  addWord: (word: Word) => void;
 };
 
 export const createRoom = (
@@ -27,8 +28,8 @@ export const createRoom = (
 
   const listUsers = () => {
     return _users.sort((a, b) => {
-      if (a.score > b.score) return 1;
-      if (a.score < b.score) return -1;
+      if (a.score > b.score) return -1;
+      if (a.score < b.score) return 1;
       return a.username > b.username ? 1 : -1;
     });
   };
@@ -115,5 +116,6 @@ export const createRoom = (
       return _words.find((_word) => _word.wordId === wordId);
     },
     listWords: () => _words,
+    addWord: (word) => _words.push(word),
   };
 };

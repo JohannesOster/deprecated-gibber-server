@@ -30,7 +30,7 @@ export const createSocketServer = (httpServer: HttpServer) => {
     socket.emit(SocketEvent.words, room.listWords());
 
     socket.on(SocketEvent.select, (wordId) => {
-      room.claim(user.userId, wordId);
+      room.select(user.userId, wordId);
       socketIOServer.in(room.roomId).emit(SocketEvent.words, room.listWords());
     });
 
@@ -67,6 +67,12 @@ export const createSocketServer = (httpServer: HttpServer) => {
 
     socket.on(SocketEvent.deny, (wordId) => {
       room.deny(user.userId, wordId);
+    });
+
+    socket.on(SocketEvent.addWord, (word) => {
+      const _word = createWord(word);
+      room.addWord(_word);
+      socketIOServer.in(room.roomId).emit(SocketEvent.words, room.listWords());
     });
 
     socket.on('disconnect', () => {

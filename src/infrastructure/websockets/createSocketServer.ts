@@ -3,6 +3,7 @@ import {createUser} from 'domain/entities/user';
 import {createWord} from 'domain/entities/word';
 import {Server as HttpServer} from 'http';
 import {Server, Socket} from 'socket.io';
+import {SocketEvent} from './SocketEvent';
 
 export interface SocketServer {
   socketIOServer: Server;
@@ -12,68 +13,65 @@ export interface SocketServer {
 export const createSocketServer = (httpServer: HttpServer) => {
   const socketIOServer = new Server(httpServer);
 
-  // initialize single room as long as not room management is implemented
-  const room = createRoom([
-    createWord('Apfel'),
-    createWord('Birne'),
-    createWord('Schinken'),
-  ]);
+  // initialize single room as long as room management is not implemented
+  const room = createRoom({
+    words: [createWord('Apfel'), createWord('Birne'), createWord('Schinken')],
+  });
 
   socketIOServer.on('connection', (socket: Socket) => {
     const {username} = socket.handshake.query;
+
     const user = createUser(username as string);
     socket.join(room.roomId);
     room.join(user);
 
-    socketIOServer.in(room.roomId).emit('users', room.getUsers());
+    socketIOServer.in(room.roomId).emit(SocketEvent.users, room.listUsers());
     socket.emit('connected', user); // successfully connected
-    socket.emit('words', room._words);
+    socket.emit(SocketEvent.words, room.listWords());
 
-    socket.on('claim', (user, word) => {
-      const _user = createUser(user.username, user.userId);
-      room.claim(_user, word);
-
-      socketIOServer.in(room.roomId).emit('words', room._words);
+    socket.on(SocketEvent.select, (wordId) => {
+      room.claim(user.userId, wordId);
+      socketIOServer.in(room.roomId).emit(SocketEvent.words, room.listWords());
     });
 
-    socket.on('unclaim', (user, word) => {
-      const _user = createUser(user.username, user.userId);
-      room.unclaim(_user, word);
-
-      socketIOServer.in(room.roomId).emit('words', room._words);
+    socket.on(SocketEvent.deselect, (wordId) => {
+      room.deselect(user.userId, wordId);
+      socketIOServer.in(room.roomId).emit(SocketEvent.words, room.listWords());
     });
 
-    socket.on('challange', (user, word) => {
-      room.challange(createUser(user.username, user.userId), word);
+    socket.on(SocketEvent.claim, (wordId) => {
+      room.claim(user.userId, wordId);
 
-      socketIOServer.in(room.roomId).emit('words', room._words);
-      socket.to(room.roomId).emit('challange', word);
+      socketIOServer.in(room.roomId).emit(SocketEvent.words, room.listWords());
+      socket.to(room.roomId).emit(SocketEvent.claim, wordId);
 
       setTimeout(() => {
-        const _user = room.getUser(user?.userId);
-        const _word = room.getWord(word);
+        const _user = room.retrieveUser(user.userId);
+        const _word = room.retrieveWord(wordId);
         if ((_word?.score || 0) < 1) _user?.decreaseScore();
         else _user?.increaseScore();
-        room.open(word);
+        room.reset(wordId);
 
-        socketIOServer.in(room.roomId).emit('words', room._words);
-        socketIOServer.in(room.roomId).emit('users', room.getUsers());
+        socketIOServer
+          .in(room.roomId)
+          .emit(SocketEvent.words, room.listWords());
+        socketIOServer
+          .in(room.roomId)
+          .emit(SocketEvent.users, room.listUsers());
       }, 3000);
     });
 
-    socket.on('accept', (user, word) => {
-      const _user = createUser(user.username, user.userId);
-      room.accept(_user, word);
+    socket.on(SocketEvent.accept, (wordId) => {
+      room.accept(user.userId, wordId);
     });
 
-    socket.on('deny', (user, word) => {
-      const _user = createUser(user.username, user.userId);
-      room.deny(_user, word);
+    socket.on(SocketEvent.deny, (wordId) => {
+      room.deny(user.userId, wordId);
     });
 
     socket.on('disconnect', () => {
-      room.leave(user);
-      socketIOServer.in(room.roomId).emit('users', room.getUsers());
+      room.leave(user.userId);
+      socketIOServer.in(room.roomId).emit('users', room.listUsers());
     });
   });
 };

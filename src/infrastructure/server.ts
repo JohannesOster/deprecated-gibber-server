@@ -1,5 +1,5 @@
 import {createServer as createHTTPServer} from 'http';
-import {createSocketServer} from './websockets';
+import {createSocketServer} from './createSocketServer';
 
 const server = createHTTPServer();
 createSocketServer(server);

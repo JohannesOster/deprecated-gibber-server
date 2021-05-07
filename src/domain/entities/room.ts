@@ -22,6 +22,8 @@ export type Room = {
 export const createRoom = (
   init: {roomId?: string; words?: Word[]} = {},
 ): Room => {
+  const MAX_WORDS = 5;
+
   const {roomId = uuid(), words: _words = []} = init;
 
   const _users: User[] = [];
@@ -92,6 +94,10 @@ export const createRoom = (
     }
   };
 
+  const sortWords = () => {
+    _words.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  };
+
   return {
     roomId,
     listUsers,
@@ -115,7 +121,16 @@ export const createRoom = (
     retrieveWord: function (wordId: string) {
       return _words.find((_word) => _word.wordId === wordId);
     },
-    listWords: () => _words,
-    addWord: (word) => _words.push(word),
+    listWords: () => {
+      sortWords();
+      return _words;
+    },
+    addWord: (word) => {
+      _words.push(word);
+      sortWords();
+      if (_words.length >= MAX_WORDS) {
+        _words.pop();
+      }
+    },
   };
 };

@@ -9,6 +9,7 @@ export type Word = {
   status: WordStatus;
   selectedBy?: string;
   score: number;
+  createdAt: Date;
   select: (userId: string) => void;
   deselect: () => void;
   claim: () => void;
@@ -25,6 +26,7 @@ export const createWord = (word: string): Word => {
     word,
     status: 'open',
     score: 1,
+    createdAt: new Date(),
     select: function (userId: string) {
       this.status = 'selected';
       this.selectedBy = userId;

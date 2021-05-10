@@ -1,4 +1,4 @@
-import {roomManager} from 'application/roomManager';
+import {roomManager} from 'application/rooms/roomManager';
 import {createUser} from 'domain/entities/user';
 import {Server as HttpServer} from 'http';
 import {Server, Socket} from 'socket.io';

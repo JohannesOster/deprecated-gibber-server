@@ -4,6 +4,7 @@ import {Word} from './word';
 
 export type Room = {
   roomId: string;
+  roomTitle: string;
   join: (user: User) => void;
   leave: (userId: string) => void;
   select: (userId: string, wordId: string) => void;
@@ -20,11 +21,11 @@ export type Room = {
 };
 
 export const createRoom = (
-  init: {roomId?: string; words?: Word[]} = {},
+  init: {roomTitle?: string; roomId?: string; words?: Word[]} = {},
 ): Room => {
   const MAX_WORDS = 5;
 
-  const {roomId = uuid(), words: _words = []} = init;
+  const {roomId = uuid(), roomTitle = '', words: _words = []} = init;
 
   const _users: User[] = [];
 
@@ -100,6 +101,7 @@ export const createRoom = (
 
   return {
     roomId,
+    roomTitle,
     listUsers,
     join,
     leave,

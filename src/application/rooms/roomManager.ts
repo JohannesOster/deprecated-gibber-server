@@ -1,6 +1,6 @@
-import {createRoom} from 'domain/entities/room';
 import {User as UserEntity} from 'domain/entities/user';
 import {createWord} from 'domain/entities/word';
+import db from 'infrastructure/db';
 import {Server, Socket} from 'socket.io';
 
 export enum SocketEvent {
@@ -22,10 +22,8 @@ export type User = {
   user: UserEntity;
 };
 
-export const roomManager = (socketIOServer: Server) => {
-  const _room = createRoom({
-    words: [createWord('Apfel'), createWord('Birne'), createWord('Schinken')],
-  });
+export const roomManager = (socketIOServer: Server, roomId: string) => {
+  const _room = db.rooms.retrieve(roomId)!;
 
   const join = ({socket, user}: User) => {
     socket.join(_room.roomId);

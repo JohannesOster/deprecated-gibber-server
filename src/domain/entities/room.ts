@@ -23,7 +23,7 @@ export type Room = {
 export const createRoom = (
   init: {roomTitle?: string; roomId?: string; words?: Word[]} = {},
 ): Room => {
-  const MAX_WORDS = 5;
+  const MAX_WORDS = 100;
 
   const {roomId = uuid(), roomTitle = '', words: _words = []} = init;
 

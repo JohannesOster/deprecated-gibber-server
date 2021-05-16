@@ -1,1 +1,1 @@
-# bullshit-bingo-server
+# gibber-server

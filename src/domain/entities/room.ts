@@ -18,6 +18,8 @@ export type Room = {
   retrieveUser: (userId: string) => User | undefined;
   retrieveWord: (wordId: string) => Word | undefined;
   addWord: (word: Word) => void;
+  upvote: (wordId: string) => void;
+  downvote: (wordId: string) => void;
 };
 
 export const createRoom = (
@@ -99,6 +101,11 @@ export const createRoom = (
     _words.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   };
 
+  const upvote = (wordId: string) =>
+    _words.find((word) => word.wordId === wordId)?.upvote();
+  const downvote = (wordId: string) =>
+    _words.find((word) => word.wordId === wordId)?.downvote();
+
   return {
     roomId,
     roomTitle,
@@ -110,6 +117,8 @@ export const createRoom = (
     claim,
     accept,
     deny,
+    upvote,
+    downvote,
     reset: (wordId: string) => {
       for (let i = 0; i < _words.length; i++) {
         if (_words[i].wordId !== wordId) continue;

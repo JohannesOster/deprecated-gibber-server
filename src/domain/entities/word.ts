@@ -8,7 +8,10 @@ export type Word = {
   word: string;
   status: WordStatus;
   selectedBy?: string;
+  /* The voting score for the current word. Weather or not it will get accepted */
   score: number;
+  /** The number of points the word will bring */
+  points: number;
   createdAt: Date;
   select: (userId: string) => void;
   deselect: () => void;
@@ -16,6 +19,8 @@ export type Word = {
   accept: () => void;
   deny: () => void;
   reset: () => void;
+  upvote: () => void;
+  downvote: () => void;
 };
 
 export const createWord = (word: string): Word => {
@@ -26,6 +31,7 @@ export const createWord = (word: string): Word => {
     word,
     status: 'open',
     score: 1,
+    points: 10,
     createdAt: new Date(),
     select: function (userId: string) {
       this.status = 'selected';
@@ -47,6 +53,12 @@ export const createWord = (word: string): Word => {
     reset: function () {
       this.status = 'open';
       delete this.selectedBy;
+    },
+    upvote: function () {
+      this.points += 10;
+    },
+    downvote: function () {
+      this.points -= 10;
     },
   };
 };

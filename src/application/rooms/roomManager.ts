@@ -12,6 +12,8 @@ export enum SocketEvent {
   addWord = 'addWord',
   listWords = 'listWords',
   listUsers = 'listUsers',
+  upvoteWord = 'upvoteWord',
+  downvoteWord = 'downvoteWord',
 
   connected = 'connected',
   disconnect = 'disconnect',
@@ -84,6 +86,20 @@ export const roomManager = (socketIOServer: Server, roomId: string) => {
     socket.on(SocketEvent.addWord, (word) => {
       const _word = createWord(word);
       _room.addWord(_word);
+      socketIOServer
+        .in(_room.roomId)
+        .emit(SocketEvent.listWords, _room.listWords());
+    });
+
+    socket.on(SocketEvent.upvoteWord, (wordId) => {
+      _room.upvote(wordId);
+      socketIOServer
+        .in(_room.roomId)
+        .emit(SocketEvent.listWords, _room.listWords());
+    });
+
+    socket.on(SocketEvent.downvoteWord, (wordId) => {
+      _room.downvote(wordId);
       socketIOServer
         .in(_room.roomId)
         .emit(SocketEvent.listWords, _room.listWords());

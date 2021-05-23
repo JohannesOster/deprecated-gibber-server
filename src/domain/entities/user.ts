@@ -4,8 +4,8 @@ export type User = {
   userId: string;
   username: string;
   score: number;
-  increaseScore: () => void;
-  decreaseScore: () => void;
+  increaseScore: (val?: number) => void;
+  decreaseScore: (val?: number) => void;
 };
 
 export const createUser = (username: string, userId: string = uuid()): User => {
@@ -13,11 +13,11 @@ export const createUser = (username: string, userId: string = uuid()): User => {
     username,
     userId,
     score: 0,
-    increaseScore: function () {
-      this.score += 1;
+    increaseScore: function (val: number = 1) {
+      this.score += val;
     },
-    decreaseScore: function () {
-      this.score -= 1;
+    decreaseScore: function (val: number = 2) {
+      this.score -= val;
     },
   };
 };

@@ -63,7 +63,7 @@ export const roomManager = (socketIOServer: Server, roomId: string) => {
         const _user = _room.retrieveUser(user.userId);
         const _word = _room.retrieveWord(wordId);
         if ((_word?.score || 0) < 1) _user?.decreaseScore();
-        else _user?.increaseScore();
+        else _user?.increaseScore(_word?.points);
         _room.reset(wordId);
 
         socketIOServer

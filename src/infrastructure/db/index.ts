@@ -1,7 +1,7 @@
 import {RoomsRepository} from './rooms';
-
-const rooms = RoomsRepository();
+import {UsersRepository} from './users';
 
 export default {
-  rooms,
+  rooms: RoomsRepository(),
+  users: UsersRepository(),
 };

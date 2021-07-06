@@ -1,3 +1,4 @@
+import {sortBy} from 'utilities';
 import {v4 as uuid} from 'uuid';
 import {User} from './user';
 import {Word} from './word';
@@ -5,143 +6,100 @@ import {Word} from './word';
 export type Room = {
   roomId: string;
   roomTitle: string;
+  createdAt: number;
+  /** Maximal number of users joining this room */
+  maxMembers: number;
+  /** The maximal number of words selectable in this room */
+  maxWords: number;
+
   join: (user: User) => void;
   leave: (userId: string) => void;
-  select: (userId: string, wordId: string) => void;
-  deselect: (userId: string, wordId: string) => void;
-  claim: (userId: string, wordId: string) => void;
-  accept: (userId: string, wordId: string) => void;
-  deny: (userId: string, wordId: string) => void;
-  reset: (wordId: string) => void;
+  close: () => void;
+
   listUsers: () => User[];
   listWords: () => Word[];
+
   retrieveUser: (userId: string) => User | undefined;
   retrieveWord: (wordId: string) => Word | undefined;
+
   addWord: (word: Word) => void;
-  upvote: (wordId: string) => void;
-  downvote: (wordId: string) => void;
 };
 
-export const createRoom = (
-  init: {roomTitle?: string; roomId?: string; words?: Word[]} = {},
-): Room => {
-  const MAX_WORDS = 100;
+type InitialValues = {
+  roomId?: string;
+  roomTitle: string;
+  words?: Word[];
+  maxMembers?: number;
+  maxWords?: number;
+};
 
-  const {roomId = uuid(), roomTitle = '', words: _words = []} = init;
-
+export const createRoom = (init: InitialValues): Room => {
+  const {
+    roomId = uuid(),
+    roomTitle,
+    words: _words = [],
+    maxMembers = 100,
+    maxWords = 100,
+  } = init;
   const _users: User[] = [];
+  const createdAt = Date.now();
 
-  const listUsers = () => {
-    return _users.sort((a, b) => {
-      if (a.score > b.score) return -1;
-      if (a.score < b.score) return 1;
-      return a.username > b.username ? 1 : -1;
-    });
-  };
-
-  const join = (user: User) => {
-    _users.push(user);
-  };
-
+  const join = (user: User) => _users.push(user);
   const leave = (userId: string) => {
     const idx = _users.findIndex((_user) => _user.userId === userId);
-    if (idx === -1) return;
+    if (idx === -1) throw Error('Can not leave room you never joined.');
 
     _users.splice(idx, 1);
 
-    // reset all words
+    // reset all that are selected by leaving user
     _words.forEach((word) => {
       if (word.selectedBy !== userId) return;
-      word.deselect();
-      word.score = 0;
+      word.deselect(userId);
     });
   };
 
-  const select = (userId: string, wordId: string) => {
-    _words.forEach((_word) => {
-      if (_word.selectedBy !== userId && _word.wordId !== wordId) return;
-      _word.wordId === wordId ? _word.select(userId) : _word.deselect();
-    });
+  const close = () => {};
+
+  const listUsers = () => {
+    return sortBy(_users, [
+      {path: 'score', asc: false},
+      {path: 'username', asc: true},
+    ]);
   };
 
-  const deselect = (userId: string, wordId: string) => {
-    for (let i = 0; i < _words.length; i++) {
-      if (_words[i].wordId !== wordId) continue;
-      _words[i].deselect();
-      break;
-    }
+  const listWords = () => {
+    return sortBy(_words, [{path: 'createdAt', asc: true}]);
   };
 
-  const claim = (userId: string, wordId: string) => {
-    for (let i = 0; i < _words.length; i++) {
-      if (_words[i].wordId !== wordId) continue;
-      if (_words[i].selectedBy !== userId) break;
-      _words[i].claim();
-      break;
-    }
+  const retrieveUser = (userId: string) => {
+    return _users.find((_user) => _user.userId === userId);
   };
 
-  const accept = (userId: string, wordId: string) => {
-    for (let i = 0; i < _words.length; i++) {
-      if (_words[i].wordId !== wordId) continue;
-      _words[i].accept();
-      break;
-    }
+  const retrieveWord = (wordId: string) => {
+    return _words.find((_word) => _word.wordId === wordId);
   };
 
-  const deny = (userId: string, wordId: string) => {
-    for (let i = 0; i < _words.length; i++) {
-      if (_words[i].wordId !== wordId) continue;
-      _words[i].deny();
-      break;
-    }
+  const addWord = (word: Word) => {
+    _words.unshift(word);
+    if (_words.length >= maxWords) _words.pop();
   };
-
-  const sortWords = () => {
-    _words.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-  };
-
-  const upvote = (wordId: string) =>
-    _words.find((word) => word.wordId === wordId)?.upvote();
-  const downvote = (wordId: string) =>
-    _words.find((word) => word.wordId === wordId)?.downvote();
 
   return {
     roomId,
     roomTitle,
-    listUsers,
+    createdAt,
+    maxMembers,
+    maxWords,
+
     join,
     leave,
-    select,
-    deselect,
-    claim,
-    accept,
-    deny,
-    upvote,
-    downvote,
-    reset: (wordId: string) => {
-      for (let i = 0; i < _words.length; i++) {
-        if (_words[i].wordId !== wordId) continue;
-        _words[i].reset();
-        break;
-      }
-    },
-    retrieveUser: function (userId: string) {
-      return _users.find((_user) => _user.userId === userId);
-    },
-    retrieveWord: function (wordId: string) {
-      return _words.find((_word) => _word.wordId === wordId);
-    },
-    listWords: () => {
-      sortWords();
-      return _words;
-    },
-    addWord: (word) => {
-      _words.push(word);
-      sortWords();
-      if (_words.length >= MAX_WORDS) {
-        _words.pop();
-      }
-    },
+    close,
+
+    listUsers,
+    listWords,
+
+    retrieveUser,
+    retrieveWord,
+    addWord,
   };
 };

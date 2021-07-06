@@ -1,64 +1,85 @@
 import {v4 as uuid} from 'uuid';
 
-type WordStatus = 'open' | 'selected' | 'claimed';
+type WordStatus =
+  | 'open'
+  | 'selected'
+  | 'claimed'
+  | 'accepted'
+  | 'denied'
+  | 'banned';
 
 export type Word = {
   wordId: string;
-  /** The actual word */
-  word: string;
+  word: string; // the actual word
   status: WordStatus;
   selectedBy?: string;
-  /* The voting score for the current word. Weather or not it will get accepted */
-  score: number;
-  /** The number of points the word will bring */
-  points: number;
-  createdAt: Date;
+  createdAt: number;
+
   select: (userId: string) => void;
-  deselect: () => void;
-  claim: () => void;
-  accept: () => void;
-  deny: () => void;
-  reset: () => void;
-  upvote: () => void;
-  downvote: () => void;
+  deselect: (userId: string) => void;
+
+  claim: (userId: string) => void;
+
+  accept: (userId: string) => void;
+  deny: (userId: string) => void;
+
+  upvote: (userId: string) => void;
+  downvote: (userId: string) => void;
+
+  retrievePoints: () => number;
+  retrievePollResult: () => number;
 };
 
 export const createWord = (word: string): Word => {
-  const wordId = uuid();
+  const DEFAULT_POINTS = 10;
+
+  const _accepted: string[] = [];
+  const _denied: string[] = [];
+
+  const _upvotes: string[] = [];
+  const _downvotes: string[] = [];
+
+  const accept = (userId: string) => _accepted.push(userId);
+  const deny = (userId: string) => _denied.push(userId);
+  const upvote = (userId: string) => _upvotes.push(userId);
+  const downvote = (userId: string) => _downvotes.push(userId);
 
   return {
-    wordId,
+    wordId: uuid(),
     word,
     status: 'open',
-    score: 1,
-    points: 10,
-    createdAt: new Date(),
+    createdAt: Date.now(),
+
     select: function (userId: string) {
       this.status = 'selected';
       this.selectedBy = userId;
     },
-    deselect: function () {
+    deselect: function (userId: string) {
+      if (this.selectedBy !== userId) {
+        throw new Error('You did not select this word.');
+      }
       this.status = 'open';
       delete this.selectedBy;
     },
-    claim: function () {
+
+    claim: function (userId: string) {
+      if (this.selectedBy !== userId) {
+        throw new Error('You did not select this word.');
+      }
       this.status = 'claimed';
     },
-    accept: function () {
-      this.score += 1;
+
+    accept,
+    deny,
+
+    upvote,
+    downvote,
+
+    retrievePoints: function () {
+      return DEFAULT_POINTS + _upvotes.length - _downvotes.length;
     },
-    deny: function () {
-      this.score -= 1;
-    },
-    reset: function () {
-      this.status = 'open';
-      delete this.selectedBy;
-    },
-    upvote: function () {
-      this.points += 10;
-    },
-    downvote: function () {
-      this.points -= 10;
+    retrievePollResult: function () {
+      return _accepted.length - _denied.length;
     },
   };
 };

@@ -72,7 +72,7 @@ describe('word', () => {
 
       word.select(user.userId);
 
-      expect(word.selectedBy).toBe(user.userId);
+      expect(word.retrieveSelectedBy()).toBe(user.userId);
     });
 
     it('update status on select', () => {
@@ -81,7 +81,7 @@ describe('word', () => {
 
       word.select(user.userId);
 
-      expect(word.status).toBe('selected');
+      expect(word.retrieveStatus()).toBe('selected');
     });
 
     it('throws on reselection by same user', () => {
@@ -113,7 +113,7 @@ describe('word', () => {
       word.select(user.userId);
 
       word.deselect(user.userId);
-      expect(word.selectedBy).toBeUndefined();
+      expect(word.retrieveSelectedBy()).toBeUndefined();
     });
 
     it('throws if word is not selected', () => {
@@ -143,7 +143,7 @@ describe('word', () => {
       word.select(user.userId);
 
       word.deselect(user.userId);
-      expect(word.selectedBy).toBeUndefined();
+      expect(word.retrieveSelectedBy()).toBeUndefined();
     });
 
     it('throws if word is not selected', () => {
@@ -173,7 +173,7 @@ describe('word', () => {
       word.select(user.userId);
       word.claim(user.userId);
 
-      expect(word.status).toBe('claimed');
+      expect(word.retrieveStatus()).toBe('claimed');
     });
 
     it('throws on claim before select', () => {

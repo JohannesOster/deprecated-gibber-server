@@ -2,8 +2,8 @@ import {InvalidOperationError} from 'domain/InvalidOperationError';
 import {ValidationError} from 'domain/ValidationError';
 import {sortBy} from 'utilities';
 import {v4 as uuid} from 'uuid';
+import {createGame, Game} from './game';
 import {User} from './user';
-import {Word} from './word';
 
 export type Room = {
   roomId: string;
@@ -14,38 +14,29 @@ export type Room = {
   /** The maximal number of words selectable in this room */
   maxWords: number;
 
+  retrieveCurrentGame: () => Game | undefined;
+
   join: (user: User) => void;
   leave: (userId: string) => void;
 
   listUsers: () => User[];
-  listWords: () => Word[];
-
   retrieveUser: (userId: string) => User | undefined;
-  retrieveWord: (wordId: string) => Word | undefined;
-
-  deleteWord: (wordId: string) => void;
-
-  addWord: (word: Word) => void;
 };
 
 type InitialValues = {
   roomId?: string;
   roomTitle: string;
-  words?: Word[];
   maxMembers?: number;
   maxWords?: number;
 };
 
 export const createRoom = (init: InitialValues): Room => {
-  const {
-    roomId = uuid(),
-    roomTitle,
-    words: _words = [],
-    maxMembers = 100,
-    maxWords = 100,
-  } = init;
-  const _users: User[] = [];
+  const {roomId = uuid(), roomTitle, maxMembers = 100, maxWords = 100} = init;
+  type UserStatus = 'active' | 'away';
+  const _users: {user: User; status: UserStatus}[] = [];
   const createdAt = Date.now();
+
+  let currentGame: Game | undefined;
 
   // - Validation
   if (roomTitle.length < 3) {
@@ -62,48 +53,59 @@ export const createRoom = (init: InitialValues): Room => {
         `Maximal amount of members (=${maxMembers}) reached. Cannot join.`,
       );
     }
-    _users.push(user);
-  };
-  const leave = (userId: string) => {
-    const idx = _users.findIndex((_user) => _user.userId === userId);
-    if (idx === -1) throw Error('Can not leave room you never joined.');
 
-    _users.splice(idx, 1);
+    const _user = _users.find(({user: u}) => u.userId === user.userId);
+    if (!_user) _users.push({user, status: 'active'});
+    else _user.status = 'active';
+
+    if (activeUsers().length >= 2 && !currentGame) {
+      currentGame = createGame({maxWords, users: _users.map(({user}) => user)});
+    }
+  };
+
+  const retrieveCurrentGame = () => currentGame;
+
+  const leave = (userId: string) => {
+    const user = _users.find(({user}) => user.userId === userId);
+    if (!user) throw Error('Can not leave room you never joined.');
+
+    user.status = 'away';
+
+    if (activeUsers().length <= 1 && currentGame) {
+      const scoreBoard = currentGame?.retrieveScoreBoard();
+      if (!scoreBoard) throw Error('Missing scoreboard.');
+
+      _users.forEach(({user}) => {
+        const score = scoreBoard[user.userId];
+        user.addToScore(roomId, score);
+      });
+
+      currentGame = undefined;
+      return;
+    }
 
     // reset all that are selected by leaving user
-    _words.forEach((word) => {
-      if (word.selectedBy !== userId) return;
+    currentGame?.listWords().forEach((word) => {
+      if (word.retrieveSelectedBy() !== userId) return;
       word.deselect(userId);
     });
   };
 
   const listUsers = () => {
-    return sortBy(_users, [
+    const users = activeUsers().map(({user}) => user);
+
+    return sortBy(users, [
       {path: 'score', asc: false},
       {path: 'username', asc: true},
     ]);
   };
 
-  const listWords = () => {
-    return sortBy(_words, [{path: 'createdAt', asc: true}]);
-  };
-
   const retrieveUser = (userId: string) => {
-    return _users.find((_user) => _user.userId === userId);
+    return activeUsers().find(({user}) => user.userId === userId)?.user;
   };
 
-  const retrieveWord = (wordId: string) => {
-    return _words.find((_word) => _word.wordId === wordId);
-  };
-
-  const addWord = (word: Word) => {
-    _words.unshift(word);
-    if (_words.length >= maxWords) _words.pop();
-  };
-
-  const deleteWord = (wordId: string) => {
-    const idx = _words.findIndex((word) => word.wordId === wordId);
-    _words.splice(idx, 1);
+  const activeUsers = () => {
+    return _users.filter(({status}) => status === 'active');
   };
 
   return {
@@ -112,17 +114,12 @@ export const createRoom = (init: InitialValues): Room => {
     createdAt,
     maxMembers,
     maxWords,
+    retrieveCurrentGame,
 
     join,
     leave,
 
     listUsers,
-    listWords,
-
-    deleteWord,
-
     retrieveUser,
-    retrieveWord,
-    addWord,
   };
 };

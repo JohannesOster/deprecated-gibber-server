@@ -23,7 +23,10 @@ export const createUser = (init: InitialValues): User => {
 
   const _scores: {[roomId: string]: number} = {};
 
-  const addToScore = (roomId: string, val: number) => (_scores[roomId] += val);
+  const addToScore = (roomId: string, val: number) => {
+    _scores[roomId] = (_scores[roomId] || 0) + val;
+  };
+
   const retrieveScore = (roomId: string) => _scores[roomId];
 
   return {

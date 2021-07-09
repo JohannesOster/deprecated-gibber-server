@@ -33,10 +33,21 @@ describe('room', () => {
 
       expect(room.retrieveUser(user.userId)).toEqual(user);
     });
+
+    it('Starts new game if second person joins', () => {
+      const room = createRoom({roomTitle: 'VO Debatten der Gender Studies'});
+      const peter = createUser({username: 'Peter'});
+      const jonathan = createUser({username: 'Jonathan'});
+
+      room.join(peter);
+      expect(room.retrieveCurrentGame()).toBeUndefined();
+      room.join(jonathan);
+      expect(room.retrieveCurrentGame()).toBeDefined();
+    });
   });
 
   describe('leave', () => {
-    it('Removes user on leave', () => {
+    it('removes user on leave', () => {
       const room = createRoom({roomTitle: 'VO Debatten der Gender Studies'});
       const user = createUser({username: 'Peter'});
       room.join(user);
@@ -45,32 +56,58 @@ describe('room', () => {
       expect(room.retrieveUser(user.userId)).toBeUndefined();
     });
 
-    it('Unselects words on leave', () => {
+    it('deselects words on leave', () => {
+      const room = createRoom({roomTitle: 'VO Debatten der Gender Studies'});
+      const marianne = createUser({username: 'Marianne'});
+      const markus = createUser({username: 'Markus'});
+      const chantal = createUser({username: 'Chantal'});
+
+      // - join 3 users to keep game after leave
+      room.join(marianne);
+      room.join(markus);
+      room.join(chantal);
+
       const word = createWord({word: 'Schinken'});
-      const room = createRoom({
-        roomTitle: 'VO Debatten der Gender Studies',
-        words: [word],
-      });
-      const user = createUser({username: 'Marianne'});
-      room.join(user);
-      word.select(user.userId);
+      room.retrieveCurrentGame()?.addWord(word);
 
-      room.leave(user.userId);
-      expect(room.retrieveWord(word.wordId)?.status).toBe('open');
+      word.select(marianne.userId);
+
+      room.leave(marianne.userId);
+      room.retrieveCurrentGame()?.retrieveWord(word.wordId)?.retrieveStatus();
+
+      expect(
+        room.retrieveCurrentGame()?.retrieveWord(word.wordId)?.retrieveStatus(),
+      ).toBe('open');
     });
-  });
 
-  describe('maxWords', () => {
-    it('Pops oldest word if max is reached', () => {
-      const word = createWord({word: 'Alfonso der Graue'});
-      const room = createRoom({
-        roomTitle: 'VO Debatten der Gender Studies',
-        maxWords: 1,
-        words: [word],
-      });
+    it('removes current game if only one player is rest', () => {
+      const room = createRoom({roomTitle: 'VO Debatten der Gender Studies'});
+      const marianne = createUser({username: 'Marianne'});
+      const markus = createUser({username: 'Markus'});
 
-      room.addWord(createWord({word: 'Alfonso der Weiße'}));
-      expect(room.retrieveWord(word.wordId)).toBeUndefined();
+      room.join(marianne);
+      room.join(markus);
+
+      room.leave(marianne.userId);
+
+      expect(room.retrieveCurrentGame()).toBeUndefined();
+    });
+
+    it('updates users scores if currentGame ends', () => {
+      const room = createRoom({roomTitle: 'VO Debatten der Gender Studies'});
+      const marianne = createUser({username: 'Marianne'});
+      const markus = createUser({username: 'Markus'});
+
+      room.join(marianne);
+      room.join(markus);
+
+      const score = 50;
+      room.retrieveCurrentGame()?.updateScore(marianne.userId, score);
+
+      room.leave(markus.userId);
+
+      expect(markus.retrieveScore(room.roomId)).toBe(0);
+      expect(marianne.retrieveScore(room.roomId)).toBe(score);
     });
   });
 
@@ -87,19 +124,6 @@ describe('room', () => {
       // source: https://youtu.be/Tx1XIm6q4r4?t=75
 
       expect(addUser).toThrow(InvalidOperationError);
-    });
-  });
-
-  describe('deleteWord', () => {
-    it('Deletes word', () => {
-      const word = createWord({word: 'Banana'});
-      const room = createRoom({
-        roomTitle: 'VO Debatten der Gender Studies',
-        words: [word],
-      });
-
-      room.deleteWord(word.wordId);
-      expect(room.retrieveWord(word.wordId)).toBeUndefined();
     });
   });
 });

@@ -13,8 +13,8 @@ type WordStatus =
 export type Word = {
   wordId: string;
   word: string; // the actual word
-  status: WordStatus;
-  selectedBy?: string;
+  retrieveStatus: () => WordStatus;
+  retrieveSelectedBy: () => string | undefined;
   createdAt: number;
 
   select: (userId: string) => void;
@@ -62,6 +62,7 @@ export const createWord = (init: InitialValues): Word => {
 
     _accepted.push(userId);
   };
+
   const deny = (userId: string) => {
     if (status !== 'claimed') {
       throw new InvalidOperationError(
@@ -75,6 +76,7 @@ export const createWord = (init: InitialValues): Word => {
 
     _denied.push(userId);
   };
+
   const upvote = (userId: string) => {
     if (_upvotes.includes(userId)) {
       throw new InvalidOperationError('Cannot upvote same word twice');
@@ -101,8 +103,8 @@ export const createWord = (init: InitialValues): Word => {
   return {
     wordId: uuid(),
     word,
-    status,
-    selectedBy,
+    retrieveStatus: () => status,
+    retrieveSelectedBy: () => selectedBy,
     createdAt: Date.now(),
 
     select: function (userId: string) {

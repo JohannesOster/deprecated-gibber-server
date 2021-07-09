@@ -23,6 +23,8 @@ export type Room = {
   retrieveUser: (userId: string) => User | undefined;
   retrieveWord: (wordId: string) => Word | undefined;
 
+  deleteWord: (wordId: string) => void;
+
   addWord: (word: Word) => void;
 };
 
@@ -99,6 +101,11 @@ export const createRoom = (init: InitialValues): Room => {
     if (_words.length >= maxWords) _words.pop();
   };
 
+  const deleteWord = (wordId: string) => {
+    const idx = _words.findIndex((word) => word.wordId === wordId);
+    _words.splice(idx, 1);
+  };
+
   return {
     roomId,
     roomTitle,
@@ -111,6 +118,8 @@ export const createRoom = (init: InitialValues): Room => {
 
     listUsers,
     listWords,
+
+    deleteWord,
 
     retrieveUser,
     retrieveWord,

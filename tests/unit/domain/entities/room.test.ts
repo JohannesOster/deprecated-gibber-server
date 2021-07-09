@@ -89,4 +89,17 @@ describe('room', () => {
       expect(addUser).toThrow(InvalidOperationError);
     });
   });
+
+  describe('deleteWord', () => {
+    it('Deletes word', () => {
+      const word = createWord({word: 'Banana'});
+      const room = createRoom({
+        roomTitle: 'VO Debatten der Gender Studies',
+        words: [word],
+      });
+
+      room.deleteWord(word.wordId);
+      expect(room.retrieveWord(word.wordId)).toBeUndefined();
+    });
+  });
 });

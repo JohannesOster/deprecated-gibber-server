@@ -37,73 +37,92 @@ export const roomManager = (socketIOServer: Server, roomId: string) => {
     socket.emit(SocketEvent.connected, user); // successfully connected
     socket.emit(SocketEvent.listWords, _room.listWords());
 
-    // socket.on(SocketEvent.selectWord, (wordId) => {
-    //   _room.select(user.userId, wordId);
-    //   socketIOServer
-    //     .in(_room.roomId)
-    //     .emit(SocketEvent.listWords, _room.listWords());
-    // });
+    socket.on(SocketEvent.selectWord, (wordId) => {
+      const word = _room.retrieveWord(wordId);
+      if (!word) return;
+      word.select(user.userId);
+      socketIOServer
+        .in(_room.roomId)
+        .emit(SocketEvent.listWords, _room.listWords());
+    });
 
-    // socket.on(SocketEvent.deselectWord, (wordId) => {
-    //   _room.deselect(user.userId, wordId);
-    //   socketIOServer
-    //     .in(_room.roomId)
-    //     .emit(SocketEvent.listWords, _room.listWords());
-    // });
+    socket.on(SocketEvent.deselectWord, (wordId) => {
+      const word = _room.retrieveWord(wordId);
+      if (!word) return;
+      word.deselect(user.userId);
+      socketIOServer
+        .in(_room.roomId)
+        .emit(SocketEvent.listWords, _room.listWords());
+    });
 
-    // socket.on(SocketEvent.claimWord, (wordId) => {
-    //   _room.claim(user.userId, wordId);
+    socket.on(SocketEvent.claimWord, (wordId) => {
+      const word = _room.retrieveWord(wordId);
+      if (!word) return;
+      word.claim(user.userId);
 
-    //   socketIOServer
-    //     .in(_room.roomId)
-    //     .emit(SocketEvent.listWords, _room.listWords());
-    //   socket.to(_room.roomId).emit(SocketEvent.claimWord, wordId);
+      socketIOServer
+        .in(_room.roomId)
+        .emit(SocketEvent.listWords, _room.listWords());
+      socket.to(_room.roomId).emit(SocketEvent.claimWord, wordId);
 
-    //   setTimeout(() => {
-    //     const _user = _room.retrieveUser(user.userId);
-    //     const _word = _room.retrieveWord(wordId);
-    //     if ((_word?.score || 0) < 1) _user?.decreaseScore();
-    //     else _user?.increaseScore(_word?.points);
-    //     _room.reset(wordId);
+      setTimeout(() => {
+        const _user = _room.retrieveUser(user.userId);
+        const _word = _room.retrieveWord(wordId);
 
-    //     socketIOServer
-    //       .in(_room.roomId)
-    //       .emit(SocketEvent.listWords, _room.listWords());
-    //     socketIOServer
-    //       .in(_room.roomId)
-    //       .emit(SocketEvent.listUsers, _room.listUsers());
-    //   }, 3000);
-    // });
+        if (!_word || !_user) return;
 
-    // socket.on(SocketEvent.acceptClaim, (wordId) => {
-    //   _room.accept(user.userId, wordId);
-    // });
+        const sign = (_word.retrievePollResult() || 0) < 1 ? -1 : 1;
+        const points = sign * _word.retrievePoints();
+        _user.addToScore(roomId, points);
 
-    // socket.on(SocketEvent.denyClaim, (wordId) => {
-    //   _room.deny(user.userId, wordId);
-    // });
+        _room.deleteWord(wordId);
 
-    // socket.on(SocketEvent.addWord, (word) => {
-    //   const _word = createWord(word);
-    //   _room.addWord(_word);
-    //   socketIOServer
-    //     .in(_room.roomId)
-    //     .emit(SocketEvent.listWords, _room.listWords());
-    // });
+        socketIOServer
+          .in(_room.roomId)
+          .emit(SocketEvent.listWords, _room.listWords());
+        socketIOServer
+          .in(_room.roomId)
+          .emit(SocketEvent.listUsers, _room.listUsers());
+      }, 3000);
+    });
 
-    // socket.on(SocketEvent.upvoteWord, (wordId) => {
-    //   _room.upvote(wordId);
-    //   socketIOServer
-    //     .in(_room.roomId)
-    //     .emit(SocketEvent.listWords, _room.listWords());
-    // });
+    socket.on(SocketEvent.acceptClaim, (wordId) => {
+      const word = _room.retrieveWord(wordId);
+      if (!word) return;
+      word.accept(user.userId);
+    });
 
-    // socket.on(SocketEvent.downvoteWord, (wordId) => {
-    //   _room.downvote(wordId);
-    //   socketIOServer
-    //     .in(_room.roomId)
-    //     .emit(SocketEvent.listWords, _room.listWords());
-    // });
+    socket.on(SocketEvent.denyClaim, (wordId) => {
+      const word = _room.retrieveWord(wordId);
+      if (!word) return;
+      word.deny(user.userId);
+    });
+
+    socket.on(SocketEvent.addWord, (word) => {
+      const _word = createWord(word);
+      _room.addWord(_word);
+      socketIOServer
+        .in(_room.roomId)
+        .emit(SocketEvent.listWords, _room.listWords());
+    });
+
+    socket.on(SocketEvent.upvoteWord, (wordId) => {
+      const word = _room.retrieveWord(wordId);
+      if (!word) return;
+      word.upvote(wordId);
+      socketIOServer
+        .in(_room.roomId)
+        .emit(SocketEvent.listWords, _room.listWords());
+    });
+
+    socket.on(SocketEvent.downvoteWord, (wordId) => {
+      const word = _room.retrieveWord(wordId);
+      if (!word) return;
+      word.downvote(wordId);
+      socketIOServer
+        .in(_room.roomId)
+        .emit(SocketEvent.listWords, _room.listWords());
+    });
 
     socket.on(SocketEvent.disconnect, () => {
       _room.leave(user.userId);

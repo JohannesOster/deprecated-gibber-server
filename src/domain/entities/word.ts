@@ -1,3 +1,5 @@
+import {InvalidOperationError} from 'domain/InvalidOperationError';
+import {ValidationError} from 'domain/ValidationError';
 import {v4 as uuid} from 'uuid';
 
 type WordStatus =
@@ -30,7 +32,12 @@ export type Word = {
   retrievePollResult: () => number;
 };
 
-export const createWord = (word: string): Word => {
+type InitialValues = {
+  word: string;
+};
+
+export const createWord = (init: InitialValues): Word => {
+  const {word} = init;
   const DEFAULT_POINTS = 10;
 
   const _accepted: string[] = [];
@@ -41,8 +48,28 @@ export const createWord = (word: string): Word => {
 
   const accept = (userId: string) => _accepted.push(userId);
   const deny = (userId: string) => _denied.push(userId);
-  const upvote = (userId: string) => _upvotes.push(userId);
-  const downvote = (userId: string) => _downvotes.push(userId);
+  const upvote = (userId: string) => {
+    if (_upvotes.includes(userId)) {
+      throw new InvalidOperationError('Cannot upvote same word twice');
+    }
+    _upvotes.push(userId);
+  };
+  const downvote = (userId: string) => {
+    if (_downvotes.includes(userId)) {
+      throw new InvalidOperationError('Cannot downvote same word twice');
+    }
+
+    _downvotes.push(userId);
+  };
+
+  // - Validation
+  if (word.length < 3) {
+    throw new ValidationError('Word must be at least 3 characters long.');
+  }
+
+  if (word.length > 30) {
+    throw new ValidationError('Word must be at max 30 characters long.');
+  }
 
   return {
     wordId: uuid(),
@@ -51,12 +78,15 @@ export const createWord = (word: string): Word => {
     createdAt: Date.now(),
 
     select: function (userId: string) {
+      if (this.selectedBy) {
+        throw new InvalidOperationError('Word is already selected');
+      }
       this.status = 'selected';
       this.selectedBy = userId;
     },
     deselect: function (userId: string) {
       if (this.selectedBy !== userId) {
-        throw new Error('You did not select this word.');
+        throw new InvalidOperationError('You did not select this word.');
       }
       this.status = 'open';
       delete this.selectedBy;
@@ -64,7 +94,7 @@ export const createWord = (word: string): Word => {
 
     claim: function (userId: string) {
       if (this.selectedBy !== userId) {
-        throw new Error('You did not select this word.');
+        throw new InvalidOperationError('You did not select this word.');
       }
       this.status = 'claimed';
     },

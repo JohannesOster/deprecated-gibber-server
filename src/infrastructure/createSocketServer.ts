@@ -8,8 +8,9 @@ export const createSocketServer = (httpServer: HttpServer) => {
 
   socketIOServer.on('connection', (socket: Socket) => {
     const {username, roomId} = socket.handshake.query;
-    const user = createUser(username as string);
+    const user = createUser({username: username as string});
     const room = roomManager(socketIOServer, roomId as string);
+
     room.join({socket, user});
   });
 };

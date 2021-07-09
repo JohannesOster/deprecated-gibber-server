@@ -1,3 +1,5 @@
+import {InvalidOperationError} from 'domain/InvalidOperationError';
+import {ValidationError} from 'domain/ValidationError';
 import {sortBy} from 'utilities';
 import {v4 as uuid} from 'uuid';
 import {User} from './user';
@@ -14,7 +16,6 @@ export type Room = {
 
   join: (user: User) => void;
   leave: (userId: string) => void;
-  close: () => void;
 
   listUsers: () => User[];
   listWords: () => Word[];
@@ -44,7 +45,23 @@ export const createRoom = (init: InitialValues): Room => {
   const _users: User[] = [];
   const createdAt = Date.now();
 
-  const join = (user: User) => _users.push(user);
+  // - Validation
+  if (roomTitle.length < 3) {
+    throw new ValidationError('RoomTitle must be at least 3 characters long.');
+  }
+
+  if (roomTitle.length > 30) {
+    throw new ValidationError('RoomTitle must be at max 30 characters long.');
+  }
+
+  const join = (user: User) => {
+    if (_users.length >= maxMembers) {
+      throw new InvalidOperationError(
+        `Maximal amount of members (=${maxMembers}) reached. Cannot join.`,
+      );
+    }
+    _users.push(user);
+  };
   const leave = (userId: string) => {
     const idx = _users.findIndex((_user) => _user.userId === userId);
     if (idx === -1) throw Error('Can not leave room you never joined.');
@@ -57,8 +74,6 @@ export const createRoom = (init: InitialValues): Room => {
       word.deselect(userId);
     });
   };
-
-  const close = () => {};
 
   const listUsers = () => {
     return sortBy(_users, [
@@ -93,7 +108,6 @@ export const createRoom = (init: InitialValues): Room => {
 
     join,
     leave,
-    close,
 
     listUsers,
     listWords,

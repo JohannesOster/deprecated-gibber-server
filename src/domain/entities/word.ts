@@ -38,7 +38,10 @@ type InitialValues = {
 
 export const createWord = (init: InitialValues): Word => {
   const {word} = init;
-  const DEFAULT_POINTS = 10;
+  const DEFAULT_POINTS = 1;
+
+  let status: WordStatus = 'open';
+  let selectedBy: string | undefined;
 
   const _accepted: string[] = [];
   const _denied: string[] = [];
@@ -46,8 +49,32 @@ export const createWord = (init: InitialValues): Word => {
   const _upvotes: string[] = [];
   const _downvotes: string[] = [];
 
-  const accept = (userId: string) => _accepted.push(userId);
-  const deny = (userId: string) => _denied.push(userId);
+  const accept = (userId: string) => {
+    if (status !== 'claimed') {
+      throw new InvalidOperationError(
+        'Word has to be claimed before accepting it.',
+      );
+    }
+
+    if (selectedBy === userId) {
+      throw new InvalidOperationError('Cannot accept own claim.');
+    }
+
+    _accepted.push(userId);
+  };
+  const deny = (userId: string) => {
+    if (status !== 'claimed') {
+      throw new InvalidOperationError(
+        'Word has to be claimed before denying it.',
+      );
+    }
+
+    if (selectedBy === userId) {
+      throw new InvalidOperationError('Cannot deny own claim.');
+    }
+
+    _denied.push(userId);
+  };
   const upvote = (userId: string) => {
     if (_upvotes.includes(userId)) {
       throw new InvalidOperationError('Cannot upvote same word twice');
@@ -74,29 +101,31 @@ export const createWord = (init: InitialValues): Word => {
   return {
     wordId: uuid(),
     word,
-    status: 'open',
+    status,
+    selectedBy,
     createdAt: Date.now(),
 
     select: function (userId: string) {
-      if (this.selectedBy) {
+      if (selectedBy) {
         throw new InvalidOperationError('Word is already selected');
       }
-      this.status = 'selected';
-      this.selectedBy = userId;
+
+      status = 'selected';
+      selectedBy = userId;
     },
     deselect: function (userId: string) {
-      if (this.selectedBy !== userId) {
+      if (selectedBy !== userId) {
         throw new InvalidOperationError('You did not select this word.');
       }
-      this.status = 'open';
-      delete this.selectedBy;
+      status = 'open';
+      selectedBy = undefined;
     },
 
     claim: function (userId: string) {
-      if (this.selectedBy !== userId) {
+      if (selectedBy !== userId) {
         throw new InvalidOperationError('You did not select this word.');
       }
-      this.status = 'claimed';
+      status = 'claimed';
     },
 
     accept,

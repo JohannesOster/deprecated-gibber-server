@@ -185,4 +185,74 @@ describe('word', () => {
       expect(claim).toThrowError(InvalidOperationError);
     });
   });
+
+  describe('accept', () => {
+    it('updates poll result on accept', () => {
+      const word = createWord({word: 'Fahrradpumpe'});
+      const markus = createUser({username: 'Markus'});
+      const severin = createUser({username: 'Severin'});
+      word.select(markus.userId);
+      word.claim(markus.userId);
+
+      word.accept(severin.userId);
+      expect(word.retrievePollResult()).toBe(1);
+    });
+
+    it('throws on accept unclaimed word', () => {
+      const word = createWord({word: 'Fahrradpumpe'});
+      const markus = createUser({username: 'Markus'});
+      const severin = createUser({username: 'Severin'});
+
+      word.select(markus.userId);
+      const accept = () => word.accept(severin.userId);
+
+      expect(accept).toThrowError(InvalidOperationError);
+    });
+
+    it('throws on accept selected word by selecting user', () => {
+      const word = createWord({word: 'Fahrradpumpe'});
+      const user = createUser({username: 'Markus'});
+
+      word.select(user.userId);
+      word.claim(user.userId);
+      const accept = () => word.accept(user.userId);
+
+      expect(accept).toThrowError(InvalidOperationError);
+    });
+  });
+
+  describe('deny', () => {
+    it('updates poll result on deny', () => {
+      const word = createWord({word: 'Fahrradpumpe'});
+      const markus = createUser({username: 'Markus'});
+      const severin = createUser({username: 'Severin'});
+      word.select(markus.userId);
+      word.claim(markus.userId);
+
+      word.deny(severin.userId);
+      expect(word.retrievePollResult()).toBe(-1);
+    });
+
+    it('throws on deny unclaimed word', () => {
+      const word = createWord({word: 'Fahrradpumpe'});
+      const markus = createUser({username: 'Markus'});
+      const severin = createUser({username: 'Severin'});
+
+      word.select(markus.userId);
+      const deny = () => word.deny(severin.userId);
+
+      expect(deny).toThrowError(InvalidOperationError);
+    });
+
+    it('throws on deny selected word by selecting user', () => {
+      const word = createWord({word: 'Fahrradpumpe'});
+      const user = createUser({username: 'Markus'});
+
+      word.select(user.userId);
+      word.claim(user.userId);
+      const deny = () => word.deny(user.userId);
+
+      expect(deny).toThrowError(InvalidOperationError);
+    });
+  });
 });

@@ -19,7 +19,6 @@ export type Room = {
   join: (user: User) => void;
   leave: (userId: string) => void;
 
-  listUsers: () => User[];
   retrieveUser: (userId: string) => User | undefined;
 };
 
@@ -91,15 +90,6 @@ export const createRoom = (init: InitialValues): Room => {
     });
   };
 
-  const listUsers = () => {
-    const users = activeUsers().map(({user}) => user);
-
-    return sortBy(users, [
-      {path: 'score', asc: false},
-      {path: 'username', asc: true},
-    ]);
-  };
-
   const retrieveUser = (userId: string) => {
     return activeUsers().find(({user}) => user.userId === userId)?.user;
   };
@@ -119,7 +109,6 @@ export const createRoom = (init: InitialValues): Room => {
     join,
     leave,
 
-    listUsers,
     retrieveUser,
   };
 };

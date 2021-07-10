@@ -6,12 +6,14 @@ import {Server, Socket} from 'socket.io';
 export enum SocketEvent {
   selectWord = 'selectWord',
   deselectWord = 'deselectWord',
+
   claimWord = 'claimWord',
+
   acceptClaim = 'acceptClaim',
   denyClaim = 'denyClaim',
+
   addWord = 'addWord',
   listWords = 'listWords',
-  listUsers = 'listUsers',
   upvoteWord = 'upvoteWord',
   downvoteWord = 'downvoteWord',
 
@@ -31,9 +33,6 @@ export const roomManager = (socketIOServer: Server, roomId: string) => {
     socket.join(_room.roomId);
     _room.join(user);
 
-    socketIOServer
-      .in(_room.roomId)
-      .emit(SocketEvent.listUsers, _room.listUsers());
     socket.emit(SocketEvent.connected, user); // successfully connected
     socket.emit(
       SocketEvent.listWords,
@@ -86,9 +85,6 @@ export const roomManager = (socketIOServer: Server, roomId: string) => {
             SocketEvent.listWords,
             _room.retrieveCurrentGame()?.listWords(),
           );
-        socketIOServer
-          .in(_room.roomId)
-          .emit(SocketEvent.listUsers, _room.listUsers());
       }, 3000);
     });
 
@@ -132,9 +128,6 @@ export const roomManager = (socketIOServer: Server, roomId: string) => {
 
     socket.on(SocketEvent.disconnect, () => {
       _room.leave(user.userId);
-      socketIOServer
-        .in(_room.roomId)
-        .emit(SocketEvent.listUsers, _room.listUsers());
     });
   };
 

@@ -1,6 +1,5 @@
 import {InvalidOperationError} from 'domain/InvalidOperationError';
 import {ValidationError} from 'domain/ValidationError';
-import {sortBy} from 'utilities';
 import {v4 as uuid} from 'uuid';
 import {createGame, Game} from './game';
 import {User} from './user';

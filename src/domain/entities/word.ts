@@ -81,11 +81,22 @@ export const createWord = (init: InitialValues): Word => {
     if (_upvotes.includes(userId)) {
       throw new InvalidOperationError('Cannot upvote same word twice');
     }
+
+    if (_downvotes.includes(userId)) {
+      const idx = _downvotes.findIndex((id) => id === userId);
+      _downvotes.splice(idx, 1);
+    }
+
     _upvotes.push(userId);
   };
   const downvote = (userId: string) => {
     if (_downvotes.includes(userId)) {
       throw new InvalidOperationError('Cannot downvote same word twice');
+    }
+
+    if (_upvotes.includes(userId)) {
+      const idx = _upvotes.findIndex((id) => id === userId);
+      _upvotes.splice(idx, 1);
     }
 
     _downvotes.push(userId);

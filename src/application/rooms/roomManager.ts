@@ -17,6 +17,8 @@ export enum SocketEvent {
   upvoteWord = 'upvoteWord',
   downvoteWord = 'downvoteWord',
 
+  retrieveScore = 'retrieveScore',
+
   connected = 'connected',
   disconnect = 'disconnect',
 }
@@ -34,27 +36,56 @@ export const roomManager = (socketIOServer: Server, roomId: string) => {
     _room.join(user);
 
     socket.emit(SocketEvent.connected, user); // successfully connected
-    socket.emit(
-      SocketEvent.listWords,
-      _room.retrieveCurrentGame()?.listWords(),
-    );
+
+    const words = _room
+      .retrieveCurrentGame()
+      ?.listWords()
+      .map((word) => ({
+        word: word.word,
+        wordId: word.wordId,
+        status: word.retrieveStatus(),
+        points: word.retrievePoints(),
+      }));
+    socket.emit(SocketEvent.listWords, words);
+
+    socketIOServer
+      .in(_room.roomId)
+      .emit(
+        SocketEvent.retrieveScore,
+        _room.retrieveCurrentGame()?.retrieveScore(user.userId),
+      );
 
     socket.on(SocketEvent.selectWord, (wordId) => {
       const word = _room.retrieveCurrentGame()?.retrieveWord(wordId);
       if (!word) return;
       word.select(user.userId);
-      socketIOServer
-        .in(_room.roomId)
-        .emit(SocketEvent.listWords, _room.retrieveCurrentGame()?.listWords());
+
+      const words = _room
+        .retrieveCurrentGame()
+        ?.listWords()
+        .map((word) => ({
+          word: word.word,
+          wordId: word.wordId,
+          status: word.retrieveStatus(),
+          points: word.retrievePoints(),
+        }));
+      socketIOServer.in(_room.roomId).emit(SocketEvent.listWords, words);
     });
 
     socket.on(SocketEvent.deselectWord, (wordId) => {
       const word = _room.retrieveCurrentGame()?.retrieveWord(wordId);
       if (!word) return;
       word.deselect(user.userId);
-      socketIOServer
-        .in(_room.roomId)
-        .emit(SocketEvent.listWords, _room.retrieveCurrentGame()?.listWords());
+      const words = _room
+        .retrieveCurrentGame()
+        ?.listWords()
+        .map((word) => ({
+          word: word.word,
+          wordId: word.wordId,
+          status: word.retrieveStatus(),
+          points: word.retrievePoints(),
+        }));
+      socketIOServer.in(_room.roomId).emit(SocketEvent.listWords, words);
     });
 
     socket.on(SocketEvent.claimWord, (wordId) => {
@@ -70,21 +101,32 @@ export const roomManager = (socketIOServer: Server, roomId: string) => {
       setTimeout(() => {
         const _user = _room.retrieveUser(user.userId);
         const _word = _room.retrieveCurrentGame()?.retrieveWord(wordId);
+        const currentGame = _room.retrieveCurrentGame();
 
-        if (!_word || !_user) return;
+        if (!_word || !_user || !currentGame) return;
 
         const sign = (_word.retrievePollResult() || 0) < 1 ? -1 : 1;
         const points = sign * _word.retrievePoints();
-        _user.addToScore(roomId, points);
+        currentGame.updateScore(user.userId, points);
 
-        _room.retrieveCurrentGame()?.deleteWord(wordId);
+        currentGame.deleteWord(wordId);
 
-        socketIOServer
-          .in(_room.roomId)
-          .emit(
-            SocketEvent.listWords,
-            _room.retrieveCurrentGame()?.listWords(),
+        const words = currentGame.listWords().map((word) => ({
+          word: word.word,
+          wordId: word.wordId,
+          status: word.retrieveStatus(),
+          points: word.retrievePoints(),
+        }));
+
+        socketIOServer.in(_room.roomId).emit(SocketEvent.listWords, words);
+
+        socketIOServer.sockets.sockets.forEach((socket) => {
+          const handshake = socket.handshake.query;
+          socket.emit(
+            SocketEvent.retrieveScore,
+            currentGame.retrieveScore((handshake.userId as string) || ''),
           );
+        });
       }, 3000);
     });
 
@@ -101,29 +143,53 @@ export const roomManager = (socketIOServer: Server, roomId: string) => {
     });
 
     socket.on(SocketEvent.addWord, (word) => {
-      const _word = createWord(word);
+      const _word = createWord({word});
       _room.retrieveCurrentGame()?.addWord(_word);
-      socketIOServer
-        .in(_room.roomId)
-        .emit(SocketEvent.listWords, _room.retrieveCurrentGame()?.listWords());
+
+      const words = _room
+        .retrieveCurrentGame()
+        ?.listWords()
+        .map((word) => ({
+          word: word.word,
+          wordId: word.wordId,
+          status: word.retrieveStatus(),
+          points: word.retrievePoints(),
+        }));
+      socketIOServer.in(_room.roomId).emit(SocketEvent.listWords, words);
     });
 
     socket.on(SocketEvent.upvoteWord, (wordId) => {
       const word = _room.retrieveCurrentGame()?.retrieveWord(wordId);
       if (!word) return;
-      word.upvote(wordId);
-      socketIOServer
-        .in(_room.roomId)
-        .emit(SocketEvent.listWords, _room.retrieveCurrentGame()?.listWords());
+      word.upvote(user.userId);
+
+      const words = _room
+        .retrieveCurrentGame()
+        ?.listWords()
+        .map((word) => ({
+          word: word.word,
+          wordId: word.wordId,
+          status: word.retrieveStatus(),
+          points: word.retrievePoints(),
+        }));
+      socketIOServer.in(_room.roomId).emit(SocketEvent.listWords, words);
     });
 
     socket.on(SocketEvent.downvoteWord, (wordId) => {
       const word = _room.retrieveCurrentGame()?.retrieveWord(wordId);
       if (!word) return;
-      word.downvote(wordId);
-      socketIOServer
-        .in(_room.roomId)
-        .emit(SocketEvent.listWords, _room.retrieveCurrentGame()?.listWords());
+      word.downvote(user.userId);
+
+      const words = _room
+        .retrieveCurrentGame()
+        ?.listWords()
+        .map((word) => ({
+          word: word.word,
+          wordId: word.wordId,
+          status: word.retrieveStatus(),
+          points: word.retrievePoints(),
+        }));
+      socketIOServer.in(_room.roomId).emit(SocketEvent.listWords, words);
     });
 
     socket.on(SocketEvent.disconnect, () => {

@@ -2,9 +2,13 @@ import {ValidationError} from 'domain/ValidationError';
 import {sortBy} from 'utilities';
 import {v4 as uuid} from 'uuid';
 import {User} from './user';
-import {Word} from './word';
+import {createWord, Word} from './word';
 
 type ScoreBoard = {[userId: string]: number};
+type Score = {
+  score: number;
+  highScore: number;
+};
 
 export type Game = {
   gameId: string;
@@ -18,7 +22,7 @@ export type Game = {
   join: (user: User) => void;
 
   updateScore: (userId: string, operand: number) => void;
-  retrieveScore: (userId: string) => number | undefined;
+  retrieveScore: (userId: string) => Score | undefined;
   retrieveScoreBoard: () => ScoreBoard;
 };
 
@@ -48,7 +52,7 @@ export const createGame = (init: InitialValues): Game => {
   }, {} as ScoreBoard);
 
   const listWords = () => {
-    return sortBy(_words, [{path: 'createdAt', asc: true}]);
+    return sortBy(_words, [{path: 'createdAt', asc: false}]);
   };
 
   const retrieveWord = (wordId: string) => {
@@ -70,7 +74,17 @@ export const createGame = (init: InitialValues): Game => {
     else scoreBoard[userId] += operand;
   };
 
-  const retrieveScore = (userId: string) => scoreBoard[userId];
+  const retrieveScore = (userId: string) => {
+    const score = scoreBoard[userId];
+    if (score === undefined) return;
+
+    const highScore = Object.values(scoreBoard).reduce((highScore, score) => {
+      return score <= highScore ? highScore : score;
+    });
+
+    return {score, highScore};
+  };
+
   const retrieveScoreBoard = () => {
     const _scoreBoard = {...scoreBoard};
     Object.freeze(_scoreBoard);

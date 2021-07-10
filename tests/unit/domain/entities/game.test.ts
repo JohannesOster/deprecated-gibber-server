@@ -12,7 +12,7 @@ describe('room', () => {
       ];
       const game = createGame({users});
       users.forEach(({userId}) => {
-        expect(game.retrieveScore(userId)).toBe(0);
+        expect(game.retrieveScore(userId)?.score).toBe(0);
       });
     });
 
@@ -70,7 +70,36 @@ describe('room', () => {
 
       const operand = 10;
       game.updateScore(users[0].userId, operand);
-      expect(game.retrieveScore(users[0].userId)).toBe(operand);
+      expect(game.retrieveScore(users[0].userId)?.score).toBe(operand);
+    });
+  });
+
+  describe('retrieveScore', () => {
+    it('returns correct score', () => {
+      const marianne = createUser({username: 'Marianne'});
+      const markus = createUser({username: 'Markus'});
+      const game = createGame({users: [marianne, markus]});
+
+      const operand = 50;
+      game.updateScore(marianne.userId, operand);
+
+      const {score} = game.retrieveScore(marianne.userId)!;
+
+      expect(score).toBe(operand);
+    });
+
+    it('returns correct highScore', () => {
+      const marianne = createUser({username: 'Marianne'});
+      const markus = createUser({username: 'Markus'});
+      const game = createGame({users: [marianne, markus]});
+
+      const operand = 50;
+      game.updateScore(marianne.userId, operand);
+      game.updateScore(markus.userId, 2 * operand);
+
+      const {highScore} = game.retrieveScore(marianne.userId)!;
+
+      expect(highScore).toBe(2 * operand);
     });
   });
 });

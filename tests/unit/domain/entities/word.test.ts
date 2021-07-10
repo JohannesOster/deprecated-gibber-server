@@ -42,6 +42,16 @@ describe('word', () => {
 
       expect(upvote).toThrowError(InvalidOperationError);
     });
+
+    it('removes downvote on upvote', () => {
+      const word = createWord({word: 'Dragon'});
+      const user = createUser({username: 'Miriam die 2te'});
+
+      word.downvote(user.userId);
+      word.upvote(user.userId);
+
+      expect(word.retrievePoints()).toBe(2);
+    });
   });
 
   describe('downvote', () => {
@@ -62,6 +72,16 @@ describe('word', () => {
       word.downvote(user.userId);
 
       expect(downvote).toThrowError(InvalidOperationError);
+    });
+
+    it('removes upvote on downvote', () => {
+      const word = createWord({word: 'Dragon'});
+      const user = createUser({username: 'Miriam die 2te'});
+
+      word.upvote(user.userId);
+      word.downvote(user.userId);
+
+      expect(word.retrievePoints()).toBe(0);
     });
   });
 

@@ -1,7 +1,7 @@
 import {ValidationError} from 'domain/ValidationError';
 import {v4 as uuid} from 'uuid';
 
-export type ChatMassage = {
+export type ChatMessage = {
   chatMessageId: string;
   senderUserId: string;
   message: string;
@@ -14,7 +14,7 @@ type InitialValues = {
   message: string;
 };
 
-export const createChatMessage = (init: InitialValues): ChatMassage => {
+export const createChatMessage = (init: InitialValues): ChatMessage => {
   const {chatMessageId = uuid(), senderUserId, message} = init;
   const createdAt = Date.now();
 

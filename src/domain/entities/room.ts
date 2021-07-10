@@ -1,6 +1,7 @@
 import {InvalidOperationError} from 'domain/InvalidOperationError';
 import {ValidationError} from 'domain/ValidationError';
 import {v4 as uuid} from 'uuid';
+import {ChatMessage} from './chatMessage';
 import {createGame, Game} from './game';
 import {User} from './user';
 
@@ -19,6 +20,10 @@ export type Room = {
   leave: (userId: string) => void;
 
   retrieveUser: (userId: string) => User | undefined;
+
+  sendChatMessage: (message: ChatMessage) => void;
+  retrieveChatMessage: (messageId: string) => ChatMessage | undefined;
+  listChatMessages: () => ChatMessage[];
 };
 
 type InitialValues = {
@@ -35,6 +40,8 @@ export const createRoom = (init: InitialValues): Room => {
   const createdAt = Date.now();
 
   let currentGame: Game | undefined;
+
+  const messages: ChatMessage[] = [];
 
   // - Validation
   if (roomTitle.length < 3) {
@@ -97,6 +104,18 @@ export const createRoom = (init: InitialValues): Room => {
     return _users.filter(({status}) => status === 'active');
   };
 
+  const sendChatMessage = (message: ChatMessage) => {
+    messages.push(message);
+  };
+
+  const retrieveChatMessage = (messageId: string) => {
+    return messages.find((message) => message.chatMessageId === messageId);
+  };
+
+  const listChatMessages = () => {
+    return messages;
+  };
+
   return {
     roomId,
     roomTitle,
@@ -109,5 +128,9 @@ export const createRoom = (init: InitialValues): Room => {
     leave,
 
     retrieveUser,
+
+    sendChatMessage,
+    retrieveChatMessage,
+    listChatMessages,
   };
 };

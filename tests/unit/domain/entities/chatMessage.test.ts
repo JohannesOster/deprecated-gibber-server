@@ -2,7 +2,7 @@ import {createChatMessage} from 'domain/entities/chatMessage';
 import {ValidationError} from 'domain/ValidationError';
 import {v4} from 'uuid';
 
-describe('chatMassage', () => {
+describe('ChatMessage', () => {
   describe('factory', () => {
     it('automatically assigns unique id', () => {
       const chatMessage = createChatMessage({

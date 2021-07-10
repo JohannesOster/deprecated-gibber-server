@@ -1,3 +1,4 @@
+import {createChatMessage} from 'domain/entities/chatMessage';
 import {createRoom} from 'domain/entities/room';
 import {createUser} from 'domain/entities/user';
 import {createWord} from 'domain/entities/word';
@@ -124,6 +125,26 @@ describe('room', () => {
       // source: https://youtu.be/Tx1XIm6q4r4?t=75
 
       expect(addUser).toThrow(InvalidOperationError);
+    });
+  });
+
+  describe('sendChatMessage', () => {
+    it('adds new message on sendChatMessage', () => {
+      const room = createRoom({
+        roomTitle: 'VO Debatten der Gender Studies',
+        maxMembers: 2,
+      });
+      const user = createUser({username: 'Maria'});
+      room.join(user);
+
+      const message = createChatMessage({
+        senderUserId: user.userId,
+        message: 'Someone out there?',
+      });
+
+      room.sendChatMessage(message);
+
+      expect(room.retrieveChatMessage(message.chatMessageId)).toBe(message);
     });
   });
 });

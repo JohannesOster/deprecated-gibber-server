@@ -1,11 +1,12 @@
 import {RoomsRepository} from './rooms';
 import {UsersRepository} from './users';
-import {verbose} from 'sqlite3';
+import db from './db';
 
-const sqlite = verbose();
-export let db = new sqlite.Database('./src/infrastructure/db/sqlite.db');
-
-export default {
+const repositories = {
   rooms: RoomsRepository(),
-  users: UsersRepository(),
+  users: UsersRepository(db),
 };
+
+repositories.users.createTable();
+
+export default repositories;

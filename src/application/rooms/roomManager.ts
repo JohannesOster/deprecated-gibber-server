@@ -93,9 +93,16 @@ export const roomManager = (socketIOServer: Server, roomId: string) => {
       if (!word) return;
       word.claim(user.userId);
 
-      socketIOServer
-        .in(_room.roomId)
-        .emit(SocketEvent.listWords, _room.retrieveCurrentGame()?.listWords());
+      const words = _room
+        .retrieveCurrentGame()
+        ?.listWords()
+        .map((word) => ({
+          word: word.word,
+          wordId: word.wordId,
+          status: word.retrieveStatus(),
+          points: word.retrievePoints(),
+        }));
+      socketIOServer.in(_room.roomId).emit(SocketEvent.listWords, words);
       socket.to(_room.roomId).emit(SocketEvent.claimWord, wordId);
 
       setTimeout(() => {

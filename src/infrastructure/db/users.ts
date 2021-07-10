@@ -1,34 +1,37 @@
 import {createUser, User} from 'domain/entities/user';
-import {db} from '.';
+import {Database} from './db';
 
-export const UsersRepository = () => {
-  const create = (user: User) => {
-    db.run(`INSERT INTO user VALUES('${user.userId}', '${user.username}')`);
-    return user;
+export const UsersRepository = (db: Database) => {
+  const createTable = () => {
+    const query = `
+    CREATE TABLE IF NOT EXISTS user (
+      userId TEXT PRIMARY KEY, 
+      username TEXT NOT NULL
+    )`;
+    return db.run(query);
+  };
+
+  const create = async ({username, userId}: User) => {
+    const query = `INSERT INTO user VALUES($userId, $username);`;
+    await db.run(query, {$userId: userId, $username: username});
+    return retrieve(userId); // current sqlite3 version does not support returning clause
   };
 
   const retrieve = async (userId: string) => {
-    const user = (await new Promise((resolve, reject) =>
-      db.get(`SELECT * FROM user WHERE userId=?`, [userId], (err, rows) => {
-        if (err) return reject(err);
-        resolve(rows);
-      }),
-    )) as any;
+    const query = `SELECT * FROM user WHERE userId=$userId`;
+    const user = await db.run(query, {$userId: userId});
+    if (!user) return undefined;
     return createUser({userId: user.userId, username: user.username});
   };
 
-  const list = () => {
-    return new Promise((resolve, reject) => {
-      db.all('SELECT * FROM user', (err, rows) => {
-        if (err) return reject(err);
-        resolve(rows);
-      });
-    }).then((users: any) => {
-      return users.map((user: any) =>
-        createUser({username: user.username, userId: user.userId}),
-      );
-    });
+  const list = async () => {
+    const query = 'SELECT * FROM user';
+    const users = await db.many(query);
+
+    return users.map((user: any) =>
+      createUser({username: user.username, userId: user.userId}),
+    );
   };
 
-  return {create, retrieve, list};
+  return {createTable, create, retrieve, list};
 };

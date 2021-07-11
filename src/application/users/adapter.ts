@@ -1,8 +1,8 @@
 import {createUser} from 'domain/entities/user';
-import db from 'infrastructure/db';
-import {httpReqHandler} from 'infrastructure/httpRequestHandler';
+import {DBAccess} from 'infrastructure/db';
+import {httpReqHandler} from 'infrastructure/httpServer/httpRequestHandler';
 
-export const UsersAdapter = () => {
+export const UsersAdapter = (db: DBAccess) => {
   const register = httpReqHandler(async (req) => {
     const {username} = req.body;
     const user = createUser({username});

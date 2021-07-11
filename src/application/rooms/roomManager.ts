@@ -1,7 +1,7 @@
 import {createChatMessage} from 'domain/entities/chatMessage';
 import {User as UserEntity} from 'domain/entities/user';
 import {createWord} from 'domain/entities/word';
-import db from 'infrastructure/db';
+import {DBAccess} from 'infrastructure/db';
 import {Server, Socket} from 'socket.io';
 
 export enum SocketEvent {
@@ -32,7 +32,11 @@ export type User = {
   user: UserEntity;
 };
 
-export const roomManager = (socketIOServer: Server, roomId: string) => {
+export const roomManager = (
+  socketIOServer: Server,
+  roomId: string,
+  db: DBAccess,
+) => {
   const _room = db.rooms.retrieve(roomId)!;
 
   const join = ({socket, user}: User) => {

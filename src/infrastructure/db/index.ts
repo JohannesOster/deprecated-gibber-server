@@ -1,12 +1,20 @@
-import {RoomsRepository} from './rooms';
-import {UsersRepository} from './users';
-import db from './db';
+import {initializeDatabaseConnection} from './db';
+import {RoomsRepository, UsersRepository} from './repositories';
 
-const repositories = {
-  rooms: RoomsRepository(),
-  users: UsersRepository(db),
+export type DBAccess = {
+  rooms: ReturnType<typeof RoomsRepository>;
+  users: ReturnType<typeof UsersRepository>;
 };
 
-repositories.users.createTable();
+export const initializeDatabase = async () => {
+  return initializeDatabaseConnection().then((db) => {
+    const repositories = {
+      rooms: RoomsRepository(),
+      users: UsersRepository(db),
+    };
 
-export default repositories;
+    repositories.users.createTable();
+
+    return repositories;
+  });
+};

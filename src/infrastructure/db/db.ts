@@ -5,9 +5,10 @@ export interface Database {
   many: (sql: string, params?: any) => Promise<any[]>;
 }
 
-export default (() => {
+export const initializeDatabaseConnection = async () => {
   const sqlite = verbose();
   const filePath = './src/infrastructure/db/sqlite.db';
+
   const db = new sqlite.Database(filePath, (error) => {
     if (error) throw error;
     console.log('Successfully connected to db at ', filePath);
@@ -39,4 +40,4 @@ export default (() => {
 
     many: (sql: string, params: any = []) => _all(sql, params),
   };
-})();
+};

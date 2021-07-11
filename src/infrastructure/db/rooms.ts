@@ -1,7 +1,8 @@
-import {Room} from 'domain/entities/room';
-
+import {createRoom, Room} from 'domain/entities/room';
 export const RoomsRepository = () => {
-  const _rooms: Room[] = [];
+  const _rooms: Room[] = [
+    createRoom({roomTitle: 'VU-Alles was zählt', roomId: 'roomId-1234'}),
+  ];
 
   const create = (room: Room) => {
     _rooms.push(room);

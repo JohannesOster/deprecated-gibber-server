@@ -139,6 +139,7 @@ describe('room', () => {
 
       const message = createChatMessage({
         senderUserId: user.userId,
+        senderUsername: user.username,
         message: 'Someone out there?',
       });
 

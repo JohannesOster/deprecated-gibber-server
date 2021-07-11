@@ -4,6 +4,7 @@ import {v4 as uuid} from 'uuid';
 export type ChatMessage = {
   chatMessageId: string;
   senderUserId: string;
+  senderUsername: string;
   message: string;
   createdAt: number;
 };
@@ -11,11 +12,12 @@ export type ChatMessage = {
 type InitialValues = {
   chatMessageId?: string;
   senderUserId: string;
+  senderUsername: string;
   message: string;
 };
 
 export const createChatMessage = (init: InitialValues): ChatMessage => {
-  const {chatMessageId = uuid(), senderUserId, message} = init;
+  const {chatMessageId = uuid(), senderUserId, senderUsername, message} = init;
   const createdAt = Date.now();
 
   if (message.length < 1) {
@@ -25,6 +27,7 @@ export const createChatMessage = (init: InitialValues): ChatMessage => {
   return {
     chatMessageId,
     senderUserId,
+    senderUsername,
     message,
     createdAt,
   };

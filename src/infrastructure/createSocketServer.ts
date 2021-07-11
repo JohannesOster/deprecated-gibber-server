@@ -8,11 +8,16 @@ export const createSocketServer = (httpServer: HttpServer) => {
 
   socketIOServer.on('connection', async (socket: Socket) => {
     const {userId, roomId} = socket.handshake.query;
-    let user = await db.users.retrieve(userId as string);
-    if (!user) throw new Error('Can not join room prior to registration');
 
-    const room = roomManager(socketIOServer, roomId as string);
+    try {
+      const user = await db.users.retrieve(userId as string);
+      if (!user) throw new Error('Can not join room prior to registration');
 
-    room.join({socket, user});
+      const room = roomManager(socketIOServer, roomId as string);
+      room.join({socket, user});
+    } catch (error) {
+      console.error(error);
+      socket.emit('error', error.message);
+    }
   });
 };

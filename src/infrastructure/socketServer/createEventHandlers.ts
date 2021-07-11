@@ -23,5 +23,36 @@ export const createEventHandlers = (
       key: SocketEvent.claimWord,
       handler: (args) => adapter.claimWord(connectionDetils, args),
     },
+    {
+      key: SocketEvent.acceptClaim,
+      handler: (args) => adapter.acceptClaim(connectionDetils, args),
+    },
+    {
+      key: SocketEvent.denyClaim,
+      handler: (args) => adapter.denyClaim(connectionDetils, args),
+    },
+    {
+      key: SocketEvent.addWord,
+      handler: (args) => adapter.addWord(connectionDetils, args),
+    },
+    {
+      key: SocketEvent.upvoteWord,
+      handler: (args) => adapter.upvoteWord(connectionDetils, args),
+    },
+    {
+      key: SocketEvent.downvoteWord,
+      handler: (args) => adapter.downvote(connectionDetils, args),
+    },
+    {
+      key: SocketEvent.sendChatMessage,
+      handler: (args) => adapter.sendChatMessage(connectionDetils, args),
+    },
+    {
+      key: SocketEvent.disconnect,
+      handler: () => {
+        const {room, user} = connectionDetils;
+        room.leave(user.userId);
+      },
+    },
   ];
 };

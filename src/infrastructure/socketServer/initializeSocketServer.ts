@@ -4,8 +4,6 @@ import {Server, Socket} from 'socket.io';
 import {ConnectionDetails} from './socketEventHandler';
 import {createEventHandlers} from './createEventHandlers';
 import {SocketEvent} from './types';
-import {createWord} from 'domain/entities/word';
-import {createChatMessage} from 'domain/entities/chatMessage';
 
 export const initializeSocketServer = (
   httpServer: HttpServer,
@@ -35,86 +33,6 @@ export const initializeSocketServer = (
       //     message: 'Testnmessage',
       //   }),
       // );
-
-      // -- EVENT HANDLERS
-      socket.on(SocketEvent.acceptClaim, (wordId) => {
-        const word = room.retrieveCurrentGame()?.retrieveWord(wordId);
-        if (!word) return;
-        word.accept(user.userId);
-      });
-
-      socket.on(SocketEvent.denyClaim, (wordId) => {
-        const word = room.retrieveCurrentGame()?.retrieveWord(wordId);
-        if (!word) return;
-        word.deny(user.userId);
-      });
-
-      socket.on(SocketEvent.addWord, (word) => {
-        const _word = createWord({word});
-        room.retrieveCurrentGame()?.addWord(_word);
-
-        const words = room
-          .retrieveCurrentGame()
-          ?.listWords()
-          .map((word) => ({
-            word: word.word,
-            wordId: word.wordId,
-            status: word.retrieveStatus(),
-            points: word.retrievePoints(),
-          }));
-        socketIOServer.in(room.roomId).emit(SocketEvent.listWords, words);
-      });
-
-      socket.on(SocketEvent.upvoteWord, (wordId) => {
-        const word = room.retrieveCurrentGame()?.retrieveWord(wordId);
-        if (!word) return;
-        word.upvote(user.userId);
-
-        const words = room
-          .retrieveCurrentGame()
-          ?.listWords()
-          .map((word) => ({
-            word: word.word,
-            wordId: word.wordId,
-            status: word.retrieveStatus(),
-            points: word.retrievePoints(),
-          }));
-        socketIOServer.in(room.roomId).emit(SocketEvent.listWords, words);
-      });
-
-      socket.on(SocketEvent.downvoteWord, (wordId) => {
-        const word = room.retrieveCurrentGame()?.retrieveWord(wordId);
-        if (!word) return;
-        word.downvote(user.userId);
-
-        const words = room
-          .retrieveCurrentGame()
-          ?.listWords()
-          .map((word) => ({
-            word: word.word,
-            wordId: word.wordId,
-            status: word.retrieveStatus(),
-            points: word.retrievePoints(),
-          }));
-        socketIOServer.in(room.roomId).emit(SocketEvent.listWords, words);
-      });
-
-      socket.on(SocketEvent.sendChatMessage, (message) => {
-        const chatMessage = createChatMessage({
-          message,
-          senderUserId: user.userId,
-          senderUsername: user.username,
-        });
-        room.sendChatMessage(chatMessage);
-        socketIOServer
-          .in(room.roomId)
-          .emit(SocketEvent.listChatMessages, room.listChatMessages());
-      });
-
-      socket.on(SocketEvent.disconnect, () => {
-        room.leave(user.userId);
-      });
-      // ------------- END
 
       // connect event handlers
       const cDetails: ConnectionDetails = {socketIOServer, socket, user, room};

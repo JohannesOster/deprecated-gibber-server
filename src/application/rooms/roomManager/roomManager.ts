@@ -1,36 +1,8 @@
 import {createChatMessage} from 'domain/entities/chatMessage';
-import {User as UserEntity} from 'domain/entities/user';
 import {createWord} from 'domain/entities/word';
 import {DBAccess} from 'infrastructure/db';
-import {Server, Socket} from 'socket.io';
-
-export enum SocketEvent {
-  selectWord = 'selectWord',
-  deselectWord = 'deselectWord',
-
-  claimWord = 'claimWord',
-
-  acceptClaim = 'acceptClaim',
-  denyClaim = 'denyClaim',
-
-  addWord = 'addWord',
-  listWords = 'listWords',
-  upvoteWord = 'upvoteWord',
-  downvoteWord = 'downvoteWord',
-
-  retrieveScore = 'retrieveScore',
-
-  listChatMessages = 'listChatMessages',
-  sendChatMessage = 'sendChatMessage',
-
-  connected = 'connected',
-  disconnect = 'disconnect',
-}
-
-export type User = {
-  socket: Socket; // the socket connection of the user
-  user: UserEntity;
-};
+import {Server} from 'socket.io';
+import {SocketEvent, User} from './types';
 
 export const roomManager = (
   socketIOServer: Server,

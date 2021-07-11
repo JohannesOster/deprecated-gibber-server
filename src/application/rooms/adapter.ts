@@ -6,7 +6,7 @@ import {DBAccess} from 'infrastructure/db';
 import {httpReqHandler} from 'infrastructure/httpServer/httpRequestHandler';
 import {SocketEvent} from 'infrastructure/socketServer';
 import {socketEventHandler} from 'infrastructure/socketServer/socketEventHandler';
-import SocketIO, {Server} from 'socket.io';
+import {Server} from 'socket.io';
 
 export const RoomsAdapter = (db: DBAccess) => {
   const create = httpReqHandler(async (req) => {
@@ -17,8 +17,8 @@ export const RoomsAdapter = (db: DBAccess) => {
 
   const list = httpReqHandler(async () => ({body: db.rooms.list()}));
 
-  const selectWord = socketEventHandler<{wordId: string}>(
-    ({room, user, socketIOServer}, {wordId}) => {
+  const selectWord = socketEventHandler<string>(
+    ({room, user, socketIOServer}, wordId) => {
       const currentGame = room.retrieveCurrentGame();
       if (!currentGame) throw new Error('There is no current game.');
       const word = currentGame.retrieveWord(wordId);
@@ -29,8 +29,8 @@ export const RoomsAdapter = (db: DBAccess) => {
     },
   );
 
-  const deselectWord = socketEventHandler<{wordId: string}>(
-    ({room, user, socketIOServer}, {wordId}) => {
+  const deselectWord = socketEventHandler<string>(
+    ({room, user, socketIOServer}, wordId) => {
       const currentGame = room.retrieveCurrentGame();
       if (!currentGame) throw new Error('There is no current game.');
 
@@ -42,8 +42,8 @@ export const RoomsAdapter = (db: DBAccess) => {
     },
   );
 
-  const claimWord = socketEventHandler<{wordId: string}>(
-    ({room, user, socketIOServer, socket}, {wordId}) => {
+  const claimWord = socketEventHandler<string>(
+    ({room, user, socketIOServer, socket}, wordId) => {
       const currentGame = room.retrieveCurrentGame();
       if (!currentGame) throw new Error('There is no current game.');
 
@@ -84,41 +84,35 @@ export const RoomsAdapter = (db: DBAccess) => {
     },
   );
 
-  const acceptClaim = socketEventHandler<{wordId: string}>(
-    ({room, user}, {wordId}) => {
-      const currentGame = room.retrieveCurrentGame();
-      if (!currentGame) throw new Error('There is no current game.');
+  const acceptClaim = socketEventHandler<string>(({room, user}, wordId) => {
+    const currentGame = room.retrieveCurrentGame();
+    if (!currentGame) throw new Error('There is no current game.');
 
-      const word = room.retrieveCurrentGame()?.retrieveWord(wordId);
-      if (!word) throw new Error('Word does not exist.');
-      word.accept(user.userId);
-    },
-  );
+    const word = room.retrieveCurrentGame()?.retrieveWord(wordId);
+    if (!word) throw new Error('Word does not exist.');
+    word.accept(user.userId);
+  });
 
-  const denyClaim = socketEventHandler<{wordId: string}>(
-    ({room, user}, {wordId}) => {
-      const currentGame = room.retrieveCurrentGame();
-      if (!currentGame) throw new Error('There is no current game.');
+  const denyClaim = socketEventHandler<string>(({room, user}, wordId) => {
+    const currentGame = room.retrieveCurrentGame();
+    if (!currentGame) throw new Error('There is no current game.');
 
-      const word = room.retrieveCurrentGame()?.retrieveWord(wordId);
-      if (!word) throw new Error('Word does not exist.');
-      word.deny(user.userId);
-    },
-  );
+    const word = room.retrieveCurrentGame()?.retrieveWord(wordId);
+    if (!word) throw new Error('Word does not exist.');
+    word.deny(user.userId);
+  });
 
-  const addWord = socketEventHandler<{word: string}>(
-    ({room, socketIOServer}, {word}) => {
-      const currentGame = room.retrieveCurrentGame();
-      if (!currentGame) throw new Error('There is no current game.');
-      const _word = createWord({word});
-      currentGame.addWord(_word);
+  const addWord = socketEventHandler<string>(({room, socketIOServer}, word) => {
+    const currentGame = room.retrieveCurrentGame();
+    if (!currentGame) throw new Error('There is no current game.');
+    const _word = createWord({word});
+    currentGame.addWord(_word);
 
-      _listWords(socketIOServer, room.roomId, currentGame);
-    },
-  );
+    _listWords(socketIOServer, room.roomId, currentGame);
+  });
 
-  const upvoteWord = socketEventHandler<{wordId: string}>(
-    ({room, user, socketIOServer}, {wordId}) => {
+  const upvoteWord = socketEventHandler<string>(
+    ({room, user, socketIOServer}, wordId) => {
       const currentGame = room.retrieveCurrentGame();
       if (!currentGame) throw new Error('There is no current game.');
 
@@ -130,8 +124,8 @@ export const RoomsAdapter = (db: DBAccess) => {
     },
   );
 
-  const downvote = socketEventHandler<{wordId: string}>(
-    ({room, user, socketIOServer}, {wordId}) => {
+  const downvote = socketEventHandler<string>(
+    ({room, user, socketIOServer}, wordId) => {
       const currentGame = room.retrieveCurrentGame();
       if (!currentGame) throw new Error('There is no current game.');
 

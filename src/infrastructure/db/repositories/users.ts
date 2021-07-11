@@ -1,5 +1,5 @@
 import {createUser, User} from 'domain/entities/user';
-import {Database} from './db';
+import {Database} from '../db';
 
 export const UsersRepository = (db: Database) => {
   const createTable = () => {

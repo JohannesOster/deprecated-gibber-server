@@ -1,19 +1,17 @@
 import {Room} from 'domain/entities/room';
-import {Database} from '../db';
 
-export const RoomsRepository = (db: Database) => {
+export const RoomsRepository = (models: any) => {
   const create = (room: Room) => {
-    const params = [room.roomId, room.roomTitle, room.createdAt];
-    const query = `INSERT INTO room VALUES(?,?,?)`;
-    return db.run(query, params);
+    return {} as any;
   };
 
   const retrieve = (roomId: string) => {
-    const query = `SELECT * FROM room WHERE roomId=?`;
-    return db.run(query, roomId);
+    return {} as any;
   };
 
-  const list = () => db.run('SELECT * FROM room');
+  const list = () => {
+    return {} as any;
+  };
 
   return {create, retrieve, list};
 };

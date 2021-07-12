@@ -1,13 +1,14 @@
 import fs from 'fs';
 import path from 'path';
 import {Sequelize} from 'sequelize/types';
+import {Model} from './types';
 
 function capitalize(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 export const createModels = (sequelize: Sequelize) => {
-  const models: any = {};
+  const models: {[key: string]: Model} = {};
 
   // Get all models
   const modelsList = fs

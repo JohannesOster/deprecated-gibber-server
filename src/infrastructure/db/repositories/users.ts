@@ -1,17 +1,20 @@
-import {User} from 'domain/entities/user';
+import {User as TUser} from 'domain/entities/user';
+import {Model} from '../models/types';
 
-export const UsersRepository = (models: any) => {
-  const create = (user: User) => {
-    return {} as any;
+export const UsersRepository = (models: {[key: string]: Model}) => {
+  const {User} = models;
+  const create = (user: TUser) => {
+    return User.create({
+      userId: user.userId,
+      username: user.username,
+    });
   };
 
   const retrieve = (userId: string) => {
-    return {} as any;
+    return User.findByPk(userId);
   };
 
-  const list = () => {
-    return {} as any;
-  };
+  const list = () => User.findAll();
 
   return {create, retrieve, list};
 };

@@ -10,15 +10,15 @@ export type DBAccess = {
 export const initializeDatabase = async () => {
   return initializeDatabaseConnection().then((db) => {
     const repositories = {
-      rooms: RoomsRepository(),
+      rooms: RoomsRepository(db),
       users: UsersRepository(db),
     };
 
-    db.run(getSQL('createTables.sql'))
-      .then(() => {
-        console.log('Successfully created tables.');
-      })
-      .catch(console.error);
+    // db.run(getSQL('createTables.sql'))
+    //   .then(() => {
+    //     console.log('Successfully created tables.');
+    //   })
+    //   .catch(console.error);
 
     return repositories;
   });

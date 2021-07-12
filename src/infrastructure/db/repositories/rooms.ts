@@ -1,19 +1,19 @@
-import {createRoom, Room} from 'domain/entities/room';
-export const RoomsRepository = () => {
-  const _rooms: Room[] = [
-    createRoom({roomTitle: 'VU-Alles was zählt', roomId: 'roomId-1234'}),
-  ];
+import {Room} from 'domain/entities/room';
+import {Database} from '../db';
 
+export const RoomsRepository = (db: Database) => {
   const create = (room: Room) => {
-    _rooms.push(room);
-    return room;
+    const params = [room.roomId, room.roomTitle, room.createdAt];
+    const query = `INSERT INTO room VALUES(?,?,?)`;
+    return db.run(query, params);
   };
 
   const retrieve = (roomId: string) => {
-    return _rooms.find((room) => room.roomId === roomId);
+    const query = `SELECT * FROM room WHERE roomId=?`;
+    return db.run(query, roomId);
   };
 
-  const list = () => _rooms;
+  const list = () => db.run('SELECT * FROM room');
 
   return {create, retrieve, list};
 };

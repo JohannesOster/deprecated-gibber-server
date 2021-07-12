@@ -1,5 +1,6 @@
 import {initializeDatabaseConnection} from './db';
 import {RoomsRepository, UsersRepository} from './repositories';
+import {getSQL} from './sql';
 
 export type DBAccess = {
   rooms: ReturnType<typeof RoomsRepository>;
@@ -13,7 +14,11 @@ export const initializeDatabase = async () => {
       users: UsersRepository(db),
     };
 
-    repositories.users.createTable();
+    db.run(getSQL('createTables.sql'))
+      .then(() => {
+        console.log('Successfully created tables.');
+      })
+      .catch(console.error);
 
     return repositories;
   });

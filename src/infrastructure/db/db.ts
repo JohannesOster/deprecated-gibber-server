@@ -1,4 +1,5 @@
 import {verbose} from 'sqlite3';
+import {getSQL} from './sql';
 
 export interface Database {
   run: (sql: string, params?: any) => Promise<any>;

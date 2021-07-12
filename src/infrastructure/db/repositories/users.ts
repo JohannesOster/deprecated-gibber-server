@@ -2,15 +2,6 @@ import {createUser, User} from 'domain/entities/user';
 import {Database} from '../db';
 
 export const UsersRepository = (db: Database) => {
-  const createTable = () => {
-    const query = `
-    CREATE TABLE IF NOT EXISTS user (
-      userId TEXT PRIMARY KEY, 
-      username TEXT NOT NULL
-    )`;
-    return db.run(query);
-  };
-
   const create = async ({username, userId}: User) => {
     const query = `INSERT INTO user VALUES($userId, $username);`;
     await db.run(query, {$userId: userId, $username: username});
@@ -33,5 +24,5 @@ export const UsersRepository = (db: Database) => {
     );
   };
 
-  return {createTable, create, retrieve, list};
+  return {create, retrieve, list};
 };

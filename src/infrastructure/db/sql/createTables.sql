@@ -1,0 +1,40 @@
+-- entities
+CREATE TABLE IF NOT EXISTS user (
+	userId TEXT PRIMARY KEY,
+	username TEXT NOT NULL,
+	createdAt INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS room (
+	roomId TEXT PRIMARY KEY,
+	roomTitle TEXT NOT NULL,
+	createdAt INTEGER NOT NULL,
+
+	currentGameId TEXT DEFAULT NULL,
+	FOREIGN KEY(currentGameId) REFERENCES game(currentGameId)
+);
+
+CREATE TABLE IF NOT EXISTS game (
+	gameId TEXT PRIMARY KEY,
+	createdAt INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS word (
+	wordId TEXT PRIMARY KEY,
+	word TEXT NOT NULL,
+	createdAt INTEGER NOT NULL
+
+	gameId TEXT NOT NULL,
+	FOREIGN KEY(gameId) REFERENCES game(gameId)
+);
+
+-- Relationships
+CREATE TABLE IF NOT EXISTS user_room (
+	userId TEXT NOT NULL,
+	roomId TEXT NOT NULL,
+	totalScore INTEGER NOT NULL DEFAULT 0,
+	currentScore INTEGER NOT NULL DEFAULT 0,
+
+  	FOREIGN KEY(userId) REFERENCES user(userId),
+  	FOREIGN KEY(roomId) REFERENCES room(roomId)
+);

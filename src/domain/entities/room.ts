@@ -30,6 +30,8 @@ export type Room = {
   sendChatMessage: (message: ChatMessage) => void;
   retrieveChatMessage: (messageId: string) => ChatMessage | undefined;
   listChatMessages: () => ChatMessage[];
+
+  retrieveHighScore: () => number;
 };
 
 type InitialValues = {
@@ -45,13 +47,16 @@ type InitialValues = {
 };
 
 export const createRoom = (init: InitialValues): Room => {
-  const {roomId = uuid(), roomTitle, chatMessages = []} = init;
+  const {
+    roomId = uuid(),
+    roomTitle,
+    chatMessages = [],
+    users: _users = [],
+  } = init;
+  let currentGame = init.currentGame;
   const maxMembers = 100;
   const maxWords = 100;
-  const _users: _User[] = [];
   const {createdAt = Date.now(), updatedAt = Date.now()} = init;
-
-  let currentGame: Game | undefined;
 
   // - Validation
   if (roomTitle.length < 3) {
@@ -90,14 +95,12 @@ export const createRoom = (init: InitialValues): Room => {
     if (activeUsers().length <= 1 && currentGame) {
       // const scoreBoard = currentGame?.retrieveScoreBoard();
       // if (!scoreBoard) throw Error('Missing scoreboard.');
-
       // _users.forEach(({user}) => {
       //   const score = scoreBoard[user.userId];
       //   user.addToScore(roomId, score);
       // });
-
-      currentGame = undefined;
-      return;
+      //currentGame = undefined;
+      // return;
     }
 
     // reset all that are selected by leaving user
@@ -129,6 +132,11 @@ export const createRoom = (init: InitialValues): Room => {
     return chatMessages;
   };
 
+  const retrieveHighScore = () => {
+    const scores = _users.map(({currentScore}) => currentScore);
+    return Math.max(...scores);
+  };
+
   return {
     roomId,
     roomTitle,
@@ -145,5 +153,7 @@ export const createRoom = (init: InitialValues): Room => {
     sendChatMessage,
     retrieveChatMessage,
     listChatMessages,
+
+    retrieveHighScore,
   };
 };

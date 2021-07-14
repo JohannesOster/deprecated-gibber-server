@@ -12,54 +12,70 @@ export const RoomsAdapter = (db: DBAccess) => {
   const create = httpReqHandler(async (req) => {
     const {roomTitle} = req.body;
     const room = createRoom({roomTitle});
-    return {body: db.rooms.save(room)};
+    return {body: await db.rooms.save(room)};
   });
 
-  const list = httpReqHandler(async () => ({body: db.rooms.list()}));
+  const list = httpReqHandler(async () => ({body: await db.rooms.list()}));
 
   const selectWord = socketEventHandler<string>(
-    ({room, user, socketIOServer}, wordId) => {
+    async ({roomId, userId, socketIOServer}, wordId) => {
+      const room = await db.rooms.findById(roomId);
+      if (!room) throw new Error('Room does not exist.');
       const currentGame = room.retrieveCurrentGame();
       if (!currentGame) throw new Error('There is no current game.');
       const word = currentGame.retrieveWord(wordId);
       if (!word) throw new Error('Word does not exist.');
-      word.select(user.userId);
+      word.select(userId);
+      db.rooms.save(room);
 
       _listWords(socketIOServer, room.roomId, currentGame);
     },
   );
 
   const deselectWord = socketEventHandler<string>(
-    ({room, user, socketIOServer}, wordId) => {
+    async ({roomId, userId, socketIOServer}, wordId) => {
+      const room = await db.rooms.findById(roomId);
+      if (!room) throw new Error('Room does not exist.');
       const currentGame = room.retrieveCurrentGame();
       if (!currentGame) throw new Error('There is no current game.');
 
       const word = room.retrieveCurrentGame()?.retrieveWord(wordId);
       if (!word) throw new Error('Word does not exist.');
 
-      word.deselect(user.userId);
+      word.deselect(userId);
+      db.rooms.save(room);
+
       _listWords(socketIOServer, room.roomId, currentGame);
     },
   );
 
   const claimWord = socketEventHandler<string>(
-    ({room, user, socketIOServer, socket}, wordId) => {
+    async ({roomId, userId, socketIOServer, socket}, wordId) => {
+      const room = await db.rooms.findById(roomId);
+      if (!room) throw new Error('Room does not exist.');
+
       const currentGame = room.retrieveCurrentGame();
       if (!currentGame) throw new Error('There is no current game.');
 
       const word = room.retrieveCurrentGame()?.retrieveWord(wordId);
       if (!word) throw new Error('Word does not exist.');
 
-      word.claim(user.userId);
+      word.claim(userId);
+      db.rooms.save(room);
 
       _listWords(socketIOServer, room.roomId, currentGame);
 
       socket.to(room.roomId).emit(SocketEvent.claimWord, wordId);
 
-      setTimeout(() => {
-        const _user = room.retrieveUser(user.userId);
-        const _word = room.retrieveCurrentGame()?.retrieveWord(wordId);
+      setTimeout(async () => {
+        const room = await db.rooms.findById(roomId);
+        if (!room) throw new Error('Room does not exist.');
+
         const currentGame = room.retrieveCurrentGame();
+        if (!currentGame) throw new Error('There is no current game.');
+
+        const _user = room.retrieveUser(userId);
+        const _word = room.retrieveCurrentGame()?.retrieveWord(wordId);
 
         if (!_word || !_user || !currentGame) return;
 
@@ -68,83 +84,119 @@ export const RoomsAdapter = (db: DBAccess) => {
         _user.currentScore += points;
 
         currentGame.deleteWord(wordId);
+        db.rooms.save(room);
 
         _listWords(socketIOServer, room.roomId, currentGame);
 
         // loop through each connected socker
-        // TODO: only use those in this room
         socketIOServer.sockets.sockets.forEach((socket) => {
           const handshake = socket.handshake.query;
-          socket.emit(
-            SocketEvent.retrieveScore,
-            room.retrieveUser((handshake.userId as string) || '')?.currentScore,
-          );
+          if ((handshake.roomId as string) !== room.roomId) return;
+          const user = room.retrieveUser((handshake.userId as string) || '');
+          if (!user) return;
+          socket.emit(SocketEvent.retrieveScore, {
+            score: user.currentScore,
+            highScore: room.retrieveHighScore(),
+          });
         });
       }, 3000);
     },
   );
 
-  const acceptClaim = socketEventHandler<string>(({room, user}, wordId) => {
-    const currentGame = room.retrieveCurrentGame();
-    if (!currentGame) throw new Error('There is no current game.');
+  const acceptClaim = socketEventHandler<string>(
+    async ({roomId, userId}, wordId) => {
+      const room = await db.rooms.findById(roomId);
+      if (!room) throw new Error('Room does not exist.');
 
-    const word = room.retrieveCurrentGame()?.retrieveWord(wordId);
-    if (!word) throw new Error('Word does not exist.');
-    word.accept(user.userId);
-  });
-
-  const denyClaim = socketEventHandler<string>(({room, user}, wordId) => {
-    const currentGame = room.retrieveCurrentGame();
-    if (!currentGame) throw new Error('There is no current game.');
-
-    const word = room.retrieveCurrentGame()?.retrieveWord(wordId);
-    if (!word) throw new Error('Word does not exist.');
-    word.deny(user.userId);
-  });
-
-  const addWord = socketEventHandler<string>(({room, socketIOServer}, word) => {
-    const currentGame = room.retrieveCurrentGame();
-    if (!currentGame) throw new Error('There is no current game.');
-    const _word = createWord({word});
-    currentGame.addWord(_word);
-
-    _listWords(socketIOServer, room.roomId, currentGame);
-  });
-
-  const upvoteWord = socketEventHandler<string>(
-    ({room, user, socketIOServer}, wordId) => {
       const currentGame = room.retrieveCurrentGame();
       if (!currentGame) throw new Error('There is no current game.');
 
       const word = room.retrieveCurrentGame()?.retrieveWord(wordId);
       if (!word) throw new Error('Word does not exist.');
-      word.upvote(user.userId);
+      word.accept(userId);
+      db.rooms.save(room);
+    },
+  );
+
+  const denyClaim = socketEventHandler<string>(
+    async ({roomId, userId}, wordId) => {
+      const room = await db.rooms.findById(roomId);
+      if (!room) throw new Error('Room does not exist.');
+
+      const currentGame = room.retrieveCurrentGame();
+      if (!currentGame) throw new Error('There is no current game.');
+
+      const word = room.retrieveCurrentGame()?.retrieveWord(wordId);
+      if (!word) throw new Error('Word does not exist.');
+      word.deny(userId);
+      db.rooms.save(room);
+    },
+  );
+
+  const addWord = socketEventHandler<string>(
+    async ({roomId, socketIOServer}, word) => {
+      const room = await db.rooms.findById(roomId);
+      if (!room) throw new Error('Room does not exist.');
+
+      const currentGame = room.retrieveCurrentGame();
+      if (!currentGame) throw new Error('There is no current game.');
+      const _word = createWord({word});
+      currentGame.addWord(_word);
+
+      db.rooms.save(room);
+
+      _listWords(socketIOServer, room.roomId, currentGame);
+    },
+  );
+
+  const upvoteWord = socketEventHandler<string>(
+    async ({roomId, userId, socketIOServer}, wordId) => {
+      const room = await db.rooms.findById(roomId);
+      if (!room) throw new Error('Room does not exist.');
+
+      const currentGame = room.retrieveCurrentGame();
+      if (!currentGame) throw new Error('There is no current game.');
+
+      const word = room.retrieveCurrentGame()?.retrieveWord(wordId);
+      if (!word) throw new Error('Word does not exist.');
+      word.upvote(userId);
+      db.rooms.save(room);
 
       _listWords(socketIOServer, room.roomId, currentGame);
     },
   );
 
   const downvote = socketEventHandler<string>(
-    ({room, user, socketIOServer}, wordId) => {
+    async ({roomId, userId, socketIOServer}, wordId) => {
+      const room = await db.rooms.findById(roomId);
+      if (!room) throw new Error('Room does not exist.');
+
       const currentGame = room.retrieveCurrentGame();
       if (!currentGame) throw new Error('There is no current game.');
 
       const word = room.retrieveCurrentGame()?.retrieveWord(wordId);
       if (!word) throw new Error('Word does not exist.');
-      word.downvote(user.userId);
+      word.downvote(userId);
+      db.rooms.save(room);
 
       _listWords(socketIOServer, room.roomId, currentGame);
     },
   );
 
   const sendChatMessage = socketEventHandler<string>(
-    ({room, user, socketIOServer}, message) => {
+    async ({roomId, userId, socketIOServer}, message) => {
+      const room = await db.rooms.findById(roomId);
+      if (!room) throw new Error('Room does not exist.');
+      const user = room.retrieveUser(userId)?.user;
+      if (!user) throw new Error('User does not exist');
       const chatMessage = createChatMessage({
         message,
-        senderUserId: user.userId,
+        senderUserId: userId,
         senderUsername: user.username,
       });
       room.sendChatMessage(chatMessage);
+      db.rooms.save(room);
+
       socketIOServer
         .in(room.roomId)
         .emit(SocketEvent.listChatMessages, room.listChatMessages());

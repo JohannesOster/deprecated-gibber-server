@@ -6,36 +6,50 @@ import {Room as DBRoom} from '../types';
 import {promisify} from 'util';
 import {roomMapper} from 'infrastructure/mapper/roomMapper';
 
-export const RoomsRepository = async (
-  redis: RedisClient,
-): Promise<{list: () => Promise<ERoom[]>} & Repository<ERoom>> => {
+type TRoomsRepository = Repository<ERoom> & {
+  findById: (userId: string) => Promise<ERoom | undefined>;
+  list: () => Promise<ERoom[]>;
+};
+
+export const RoomsRepository = (redis: RedisClient): TRoomsRepository => {
   const REDIS_KEY = 'rooms';
   const getAsync = promisify(redis.get).bind(redis);
 
-  const rooms: DBRoom[] = await getAsync(REDIS_KEY).then((rooms) => {
-    return rooms ? JSON.parse(rooms) : [];
-  });
+  const all = () => {
+    return getAsync(REDIS_KEY).then((rooms) => {
+      if (!rooms) return [];
+      const _rooms = JSON.parse(rooms);
+      if (Array.isArray(_rooms)) return _rooms;
+      return [_rooms];
+    });
+  };
 
-  const findById = (roomId: string): Promise<DBRoom | undefined> => {
-    return Promise.resolve(rooms.find((room) => room.roomId === roomId));
+  const findById = async (roomId: string) => {
+    const rooms = await all();
+    const room = rooms.find((room) => room.roomId === roomId);
+    if (!room) return Promise.resolve(undefined);
+
+    return Promise.resolve(roomMapper.toDomain(room));
   };
 
   const list = async () => {
+    const rooms = await all();
+
     return Promise.resolve(rooms.map((room) => roomMapper.toDomain(room)));
   };
 
   const save = async (room: ERoom) => {
+    const rooms = await all();
     let _room = await findById(room.roomId);
     if (!_room) {
-      const timestamp = Date.now();
-      _room = roomMapper.toPersistence(room);
-      rooms.push(_room);
+      const newRoom = roomMapper.toPersistence(room);
+      rooms.push(newRoom);
 
       return new Promise<ERoom>((resolve, reject) => {
         redis.set(REDIS_KEY, JSON.stringify(rooms), (error) => {
           if (error) return reject(error);
 
-          resolve(roomMapper.toDomain(_room!));
+          resolve(roomMapper.toDomain(newRoom!));
         });
       });
     }
@@ -51,5 +65,5 @@ export const RoomsRepository = async (
     });
   };
 
-  return {save, list};
+  return {save, list, findById};
 };

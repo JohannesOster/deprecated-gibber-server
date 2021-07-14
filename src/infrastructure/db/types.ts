@@ -1,17 +1,10 @@
+import {WordStatus} from 'domain/entities';
 import {RoomsRepository} from './repositories/rooms';
 import {UsersRepository} from './repositories/users';
 
-type AsyncReturnType<T extends (...args: any) => any> = T extends (
-  ...args: any
-) => Promise<infer U>
-  ? U
-  : T extends (...args: any) => infer U
-  ? U
-  : any;
-
 export interface DBAccess {
-  users: AsyncReturnType<typeof UsersRepository>;
-  rooms: AsyncReturnType<typeof RoomsRepository>;
+  users: ReturnType<typeof UsersRepository>;
+  rooms: ReturnType<typeof RoomsRepository>;
 }
 type Timestamp = {
   createdAt: number;
@@ -26,6 +19,13 @@ export type User = {
 export type Word = {
   wordId: string;
   word: string;
+  selectedBy?: string;
+  status?: WordStatus;
+
+  _accepted: string[];
+  _denied: string[];
+  _upvotes: string[];
+  _downvotes: string[];
 } & Timestamp;
 
 export type Game = {

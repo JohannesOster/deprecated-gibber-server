@@ -20,22 +20,4 @@ describe('user', () => {
       expect(user.userId).toBeDefined();
     });
   });
-
-  describe('addToScore', () => {
-    it('increases score by provided value', () => {
-      const fakeRoomId = 'roomId';
-      const score = 5;
-      const user = createUser({username: 'Anastasia'});
-      user.addToScore(fakeRoomId, score);
-      expect(user.retrieveScore(fakeRoomId)).toBe(score);
-    });
-
-    it('decreases score by provided negative value', () => {
-      const fakeRoomId = 'roomId';
-      const score = -5;
-      const user = createUser({username: 'Kepplin der 2te'});
-      user.addToScore(fakeRoomId, score);
-      expect(user.retrieveScore(fakeRoomId)).toBe(score);
-    });
-  });
 });

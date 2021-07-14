@@ -2,7 +2,7 @@ import {InvalidOperationError} from 'domain/InvalidOperationError';
 import {ValidationError} from 'domain/ValidationError';
 import {v4 as uuid} from 'uuid';
 
-type WordStatus =
+export type WordStatus =
   | 'open'
   | 'selected'
   | 'claimed'
@@ -13,6 +13,11 @@ type WordStatus =
 export type Word = {
   wordId: string;
   word: string; // the actual word
+  _accepted: string[];
+  _denied: string[];
+  _upvotes: string[];
+  _downvotes: string[];
+
   retrieveStatus: () => WordStatus;
   retrieveSelectedBy: () => string | undefined;
   createdAt: number;
@@ -36,8 +41,15 @@ export type Word = {
 type InitialValues = {
   word: string;
   wordId?: string;
+  status?: WordStatus;
+  selectedBy?: string;
   updatedAt?: number;
   createdAt?: number;
+
+  _accepted?: string[];
+  _denied?: string[];
+  _upvotes?: string[];
+  _downvotes?: string[];
 };
 
 export const createWord = (init: InitialValues): Word => {
@@ -46,17 +58,14 @@ export const createWord = (init: InitialValues): Word => {
     word,
     updatedAt = Date.now(),
     createdAt = Date.now(),
+
+    _accepted = [],
+    _denied = [],
+    _upvotes = [],
+    _downvotes = [],
   } = init;
+  let {selectedBy, status = 'open'} = init;
   const DEFAULT_POINTS = 1;
-
-  let status: WordStatus = 'open';
-  let selectedBy: string | undefined;
-
-  const _accepted: string[] = [];
-  const _denied: string[] = [];
-
-  const _upvotes: string[] = [];
-  const _downvotes: string[] = [];
 
   const accept = (userId: string) => {
     if (status !== 'claimed') {
@@ -163,5 +172,10 @@ export const createWord = (init: InitialValues): Word => {
     retrievePollResult: function () {
       return _accepted.length - _denied.length;
     },
+
+    _accepted,
+    _denied,
+    _downvotes,
+    _upvotes,
   };
 };

@@ -7,8 +7,8 @@ export const userMapper: Mapper<EUser, DBUser> = {
     return {
       userId: user.userId,
       username: user.username,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
+      createdAt: Date.now(), // TODO: fix
+      updatedAt: Date.now(),
     };
   },
 
@@ -16,8 +16,6 @@ export const userMapper: Mapper<EUser, DBUser> = {
     return createUser({
       userId: raw.userId,
       username: raw.username,
-      createdAt: raw.createdAt,
-      updatedAt: raw.updatedAt,
     });
   },
 };

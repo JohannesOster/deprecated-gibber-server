@@ -16,6 +16,7 @@ export type Word = {
   retrieveStatus: () => WordStatus;
   retrieveSelectedBy: () => string | undefined;
   createdAt: number;
+  updatedAt: number;
 
   select: (userId: string) => void;
   deselect: (userId: string) => void;
@@ -34,10 +35,18 @@ export type Word = {
 
 type InitialValues = {
   word: string;
+  wordId?: string;
+  updatedAt?: number;
+  createdAt?: number;
 };
 
 export const createWord = (init: InitialValues): Word => {
-  const {word} = init;
+  const {
+    wordId = uuid(),
+    word,
+    updatedAt = Date.now(),
+    createdAt = Date.now(),
+  } = init;
   const DEFAULT_POINTS = 1;
 
   let status: WordStatus = 'open';
@@ -112,11 +121,12 @@ export const createWord = (init: InitialValues): Word => {
   }
 
   return {
-    wordId: uuid(),
+    wordId,
     word,
     retrieveStatus: () => status,
     retrieveSelectedBy: () => selectedBy,
-    createdAt: Date.now(),
+    createdAt,
+    updatedAt,
 
     select: function (userId: string) {
       if (selectedBy) {

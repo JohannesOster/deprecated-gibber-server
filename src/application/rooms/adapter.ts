@@ -12,7 +12,7 @@ export const RoomsAdapter = (db: DBAccess) => {
   const create = httpReqHandler(async (req) => {
     const {roomTitle} = req.body;
     const room = createRoom({roomTitle});
-    return {body: db.rooms.create(room)};
+    return {body: db.rooms.save(room)};
   });
 
   const list = httpReqHandler(async () => ({body: db.rooms.list()}));
@@ -65,7 +65,7 @@ export const RoomsAdapter = (db: DBAccess) => {
 
         const sign = (_word.retrievePollResult() || 0) < 1 ? -1 : 1;
         const points = sign * _word.retrievePoints();
-        currentGame.updateScore(user.userId, points);
+        _user.currentScore += points;
 
         currentGame.deleteWord(wordId);
 
@@ -77,7 +77,7 @@ export const RoomsAdapter = (db: DBAccess) => {
           const handshake = socket.handshake.query;
           socket.emit(
             SocketEvent.retrieveScore,
-            currentGame.retrieveScore((handshake.userId as string) || ''),
+            room.retrieveUser((handshake.userId as string) || '')?.currentScore,
           );
         });
       }, 3000);

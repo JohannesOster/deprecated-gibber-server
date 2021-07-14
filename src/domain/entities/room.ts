@@ -5,21 +5,27 @@ import {ChatMessage} from './chatMessage';
 import {createGame, Game} from './game';
 import {User} from './user';
 
+type UserStatus = 'active' | 'away';
+type _User = {
+  status: UserStatus;
+  currentScore: number;
+  totalScore: number;
+  user: User;
+};
+
 export type Room = {
   roomId: string;
   roomTitle: string;
   createdAt: number;
-  /** Maximal number of users joining this room */
-  maxMembers: number;
-  /** The maximal number of words selectable in this room */
-  maxWords: number;
+  updatedAt: number;
 
   retrieveCurrentGame: () => Game | undefined;
 
   join: (user: User) => void;
   leave: (userId: string) => void;
 
-  retrieveUser: (userId: string) => User | undefined;
+  retrieveUser: (userId: string) => _User | undefined;
+  listUsers: () => _User[];
 
   sendChatMessage: (message: ChatMessage) => void;
   retrieveChatMessage: (messageId: string) => ChatMessage | undefined;
@@ -29,19 +35,23 @@ export type Room = {
 type InitialValues = {
   roomId?: string;
   roomTitle: string;
-  maxMembers?: number;
-  maxWords?: number;
+
+  currentGame?: Game;
+  users?: _User[];
+  chatMessages?: ChatMessage[];
+
+  updatedAt?: number;
+  createdAt?: number;
 };
 
 export const createRoom = (init: InitialValues): Room => {
-  const {roomId = uuid(), roomTitle, maxMembers = 100, maxWords = 100} = init;
-  type UserStatus = 'active' | 'away';
-  const _users: {user: User; status: UserStatus}[] = [];
-  const createdAt = Date.now();
+  const {roomId = uuid(), roomTitle, chatMessages = []} = init;
+  const maxMembers = 100;
+  const maxWords = 100;
+  const _users: _User[] = [];
+  const {createdAt = Date.now(), updatedAt = Date.now()} = init;
 
   let currentGame: Game | undefined;
-
-  const messages: ChatMessage[] = [];
 
   // - Validation
   if (roomTitle.length < 3) {
@@ -60,11 +70,12 @@ export const createRoom = (init: InitialValues): Room => {
     }
 
     const _user = _users.find(({user: u}) => u.userId === user.userId);
-    if (!_user) _users.push({user, status: 'active'});
-    else _user.status = 'active';
+    if (!_user) {
+      _users.push({user, status: 'active', totalScore: 0, currentScore: 0});
+    } else _user.status = 'active';
 
     if (activeUsers().length >= 2 && !currentGame) {
-      currentGame = createGame({maxWords, users: _users.map(({user}) => user)});
+      currentGame = createGame();
     }
   };
 
@@ -77,13 +88,13 @@ export const createRoom = (init: InitialValues): Room => {
     user.status = 'away';
 
     if (activeUsers().length <= 1 && currentGame) {
-      const scoreBoard = currentGame?.retrieveScoreBoard();
-      if (!scoreBoard) throw Error('Missing scoreboard.');
+      // const scoreBoard = currentGame?.retrieveScoreBoard();
+      // if (!scoreBoard) throw Error('Missing scoreboard.');
 
-      _users.forEach(({user}) => {
-        const score = scoreBoard[user.userId];
-        user.addToScore(roomId, score);
-      });
+      // _users.forEach(({user}) => {
+      //   const score = scoreBoard[user.userId];
+      //   user.addToScore(roomId, score);
+      // });
 
       currentGame = undefined;
       return;
@@ -97,37 +108,39 @@ export const createRoom = (init: InitialValues): Room => {
   };
 
   const retrieveUser = (userId: string) => {
-    return activeUsers().find(({user}) => user.userId === userId)?.user;
+    return activeUsers().find(({user}) => user.userId === userId);
   };
+
+  const listUsers = () => _users;
 
   const activeUsers = () => {
     return _users.filter(({status}) => status === 'active');
   };
 
   const sendChatMessage = (message: ChatMessage) => {
-    messages.push(message);
+    chatMessages.push(message);
   };
 
   const retrieveChatMessage = (messageId: string) => {
-    return messages.find((message) => message.chatMessageId === messageId);
+    return chatMessages.find((message) => message.chatMessageId === messageId);
   };
 
   const listChatMessages = () => {
-    return messages;
+    return chatMessages;
   };
 
   return {
     roomId,
     roomTitle,
     createdAt,
-    maxMembers,
-    maxWords,
+    updatedAt,
     retrieveCurrentGame,
 
     join,
     leave,
 
     retrieveUser,
+    listUsers,
 
     sendChatMessage,
     retrieveChatMessage,

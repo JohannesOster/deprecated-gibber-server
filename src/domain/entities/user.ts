@@ -4,13 +4,25 @@ import {v4 as uuid} from 'uuid';
 export type User = {
   userId: string;
   username: string;
+  createdAt: number;
+  updatedAt: number;
   addToScore: (roomId: string, val: number) => void;
   retrieveScore: (roomId: string) => number | undefined;
 };
 
-type InitialValues = {username: string; userId?: string};
+type InitialValues = {
+  username: string;
+  userId?: string;
+  createdAt?: number;
+  updatedAt?: number;
+};
 export const createUser = (init: InitialValues): User => {
-  const {username, userId = uuid()} = init;
+  const {
+    username,
+    userId = uuid(),
+    createdAt = Date.now(),
+    updatedAt = Date.now(),
+  } = init;
 
   // - Validation
   if (username.length < 3) {
@@ -32,6 +44,8 @@ export const createUser = (init: InitialValues): User => {
   return {
     username,
     userId,
+    createdAt,
+    updatedAt,
     addToScore,
     retrieveScore,
   };

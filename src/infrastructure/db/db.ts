@@ -1,12 +1,18 @@
-import {Sequelize} from 'sequelize';
-import {createModels} from './models';
+import {createClient} from 'redis';
+import {UsersRepository} from './repositories';
+import {RoomsRepository} from './repositories/rooms';
+import {DBAccess} from './types';
 
-export const initializeDatabaseConnection = async () => {
-  const filePath = './src/infrastructure/db/db.sqlite';
-  const sequelize = new Sequelize({dialect: 'sqlite', storage: filePath});
-  const models = createModels(sequelize);
+export const db = {
+  init: (): Promise<DBAccess> => {
+    const connectionString = 'redis://127.0.0.1:6379';
+    const client = createClient(connectionString);
 
-  await sequelize.sync();
-
-  return models;
+    return Promise.all([UsersRepository(client), RoomsRepository(client)]).then(
+      ([users, rooms]) => ({
+        users,
+        rooms,
+      }),
+    );
+  },
 };

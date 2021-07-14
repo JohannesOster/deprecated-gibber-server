@@ -7,8 +7,9 @@ export const userMapper: Mapper<EUser, DBUser> = {
     return {
       userId: user.getUserId(),
       username: user.getUsername(),
-      createdAt: Date.now(), // TODO: fix
-      updatedAt: Date.now(),
+      // to be modified by repository
+      createdAt: 0,
+      updatedAt: 0,
     };
   },
 

@@ -21,7 +21,7 @@ describe('room', () => {
 
     it('automatically assigns unique id', () => {
       const room = createRoom({roomTitle: 'VO Debatten der Gender Studies'});
-      expect(room.roomId).toBeDefined();
+      expect(room.getRoomId()).toBeDefined();
     });
   });
 
@@ -32,7 +32,7 @@ describe('room', () => {
 
       room.join(user);
 
-      expect(room.retrieveUser(user.getUserId())?.user).toEqual(user);
+      expect(room.getPlayer(user.getUserId())?.user).toEqual(user);
     });
 
     it('Starts new game if second person joins', () => {
@@ -41,9 +41,9 @@ describe('room', () => {
       const jonathan = createUser({username: 'Jonathan'});
 
       room.join(peter);
-      expect(room.retrieveCurrentGame()).toBeUndefined();
+      expect(room.getCurrentGame()).toBeUndefined();
       room.join(jonathan);
-      expect(room.retrieveCurrentGame()).toBeDefined();
+      expect(room.getCurrentGame()).toBeDefined();
     });
   });
 
@@ -54,7 +54,7 @@ describe('room', () => {
       room.join(user);
 
       room.leave(user.getUserId());
-      expect(room.retrieveUser(user.getUserId())).toBeUndefined();
+      expect(room.getPlayer(user.getUserId())).toBeUndefined();
     });
 
     it('deselects words on leave', () => {
@@ -69,21 +69,15 @@ describe('room', () => {
       room.join(chantal);
 
       const word = createWord({word: 'Schinken'});
-      room.retrieveCurrentGame()?.addWord(word);
+      room.getCurrentGame()?.addWord(word);
 
       word.select(marianne.userId);
 
       room.leave(marianne.userId);
-      room
-        .retrieveCurrentGame()
-        ?.retrieveWord(word.getWordId())
-        ?.retrieveStatus();
+      room.getCurrentGame()?.getWord(word.getWordId())?.retrieveStatus();
 
       expect(
-        room
-          .retrieveCurrentGame()
-          ?.retrieveWord(word.getWordId())
-          ?.retrieveStatus(),
+        room.getCurrentGame()?.getWord(word.getWordId())?.retrieveStatus(),
       ).toBe('open');
     });
 
@@ -97,7 +91,7 @@ describe('room', () => {
 
       room.leave(marianne.userId);
 
-      expect(room.retrieveCurrentGame()).toBeUndefined();
+      expect(room.getCurrentGame()).toBeUndefined();
     });
 
     it('updates users scores if currentGame ends', () => {
@@ -109,12 +103,12 @@ describe('room', () => {
       room.join(markus);
 
       const score = 50;
-      room.retrieveUser(marianne.userId)!.currentScore = score;
+      room.getPlayer(marianne.userId)!.currentScore = score;
 
       room.leave(markus.userId);
 
-      expect(markus.retrieveScore(room.roomId)).toBe(0);
-      expect(marianne.retrieveScore(room.roomId)).toBe(score);
+      expect(markus.retrieveScore(room.getRoomId())).toBe(0);
+      expect(marianne.retrieveScore(room.getRoomId())).toBe(score);
     });
   });
 

@@ -55,9 +55,9 @@ export const createEventHandlers = (
         if (!room) return;
         room.leave(userId);
         db.rooms.save(room);
-        const currentGame = room.retrieveCurrentGame();
+        const currentGame = room.getCurrentGame();
         if (!currentGame) return;
-        const words = currentGame.listWords().map((word) => ({
+        const words = currentGame.getWords().map((word) => ({
           word: word.getWord(),
           wordId: word.getWordId(),
           status: word.getStatus(),

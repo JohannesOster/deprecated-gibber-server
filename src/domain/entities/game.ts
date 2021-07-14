@@ -1,13 +1,11 @@
-import {sortBy} from 'utilities';
 import {v4 as uuid} from 'uuid';
 import {Word} from './word';
 
 export type Game = {
-  gameId: string;
-
+  getGameId: () => string;
+  getWords: () => Word[];
+  getWord: (wordId: string) => Word | undefined;
   addWord: (word: Word) => void;
-  retrieveWord: (wordId: string) => Word | undefined;
-  listWords: () => Word[];
   deleteWord: (wordId: string) => void;
 };
 
@@ -21,9 +19,9 @@ export const createGame = (init: InitialValues = {}): Game => {
 
   const maxWords = 100;
 
-  const listWords = () => _words;
-
-  const retrieveWord = (wordId: string) => {
+  const getGameId = () => gameId;
+  const getWords = () => _words;
+  const getWord = (wordId: string) => {
     return _words.find((_word) => _word.getWordId() === wordId);
   };
 
@@ -38,11 +36,10 @@ export const createGame = (init: InitialValues = {}): Game => {
   };
 
   return {
-    gameId,
-
+    getGameId,
+    getWords,
+    getWord,
     addWord,
-    retrieveWord,
-    listWords,
     deleteWord,
   };
 };

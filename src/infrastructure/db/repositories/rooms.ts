@@ -26,7 +26,7 @@ export const RoomsRepository = (redis: RedisClient): TRoomsRepository => {
 
   const findById = async (roomId: string) => {
     const rooms = await all();
-    const room = rooms.find((room) => room.roomId === roomId);
+    const room = rooms.find((room) => room.getRoomId() === roomId);
     if (!room) return Promise.resolve(undefined);
 
     return Promise.resolve(roomMapper.toDomain(room));
@@ -40,7 +40,7 @@ export const RoomsRepository = (redis: RedisClient): TRoomsRepository => {
 
   const save = async (room: ERoom) => {
     const rooms = await all();
-    let _room = await findById(room.roomId);
+    let _room = await findById(room.getRoomId());
     if (!_room) {
       const newRoom = roomMapper.toPersistence(room);
       rooms.push(newRoom);
@@ -55,7 +55,6 @@ export const RoomsRepository = (redis: RedisClient): TRoomsRepository => {
     }
 
     const updated = roomMapper.toPersistence(room);
-    updated.updatedAt = Date.now();
 
     return new Promise<ERoom>((resolve, reject) => {
       redis.set(REDIS_KEY, JSON.stringify(updated), (error) => {

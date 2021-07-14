@@ -24,7 +24,7 @@ export const initializeSocketServer = (
       room.join(user);
       db.rooms.save(room);
 
-      socket.join(room.roomId);
+      socket.join(room.getRoomId());
       socket.emit(SocketEvent.connected, user); // successfully connected
       // room.sendChatMessage(
       //   createChatMessage({
@@ -43,16 +43,16 @@ export const initializeSocketServer = (
       const eventHandlers = createEventHandlers(cDetails, db);
       eventHandlers.forEach(({key, handler}) => socket.on(key, handler));
       // initial steps after joining a room
-      const currentGame = room.retrieveCurrentGame();
+      const currentGame = room.getCurrentGame();
       if (!currentGame) return;
       socket.emit(SocketEvent.retrieveScore, {
-        highScore: room.retrieveHighScore(),
-        score: room.retrieveUser(user.getUserId())?.currentScore,
+        highScore: room.getHighScore(),
+        score: room.getPlayer(user.getUserId())?.currentScore,
       });
 
       socket.emit(SocketEvent.listChatMessages, room.listChatMessages());
 
-      const words = currentGame.listWords().map((word) => ({
+      const words = currentGame.getWords().map((word) => ({
         word: word.getWord(),
         wordId: word.getWordId(),
         status: word.getStatus(),

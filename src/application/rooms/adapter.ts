@@ -21,14 +21,14 @@ export const RoomsAdapter = (db: DBAccess) => {
     async ({roomId, userId, socketIOServer}, wordId) => {
       const room = await db.rooms.findById(roomId);
       if (!room) throw new Error('Room does not exist.');
-      const currentGame = room.retrieveCurrentGame();
+      const currentGame = room.getCurrentGame();
       if (!currentGame) throw new Error('There is no current game.');
-      const word = currentGame.retrieveWord(wordId);
+      const word = currentGame.getWord(wordId);
       if (!word) throw new Error('Word does not exist.');
       word.select(userId);
       db.rooms.save(room);
 
-      _listWords(socketIOServer, room.roomId, currentGame);
+      _listWords(socketIOServer, room.getRoomId(), currentGame);
     },
   );
 
@@ -36,16 +36,16 @@ export const RoomsAdapter = (db: DBAccess) => {
     async ({roomId, userId, socketIOServer}, wordId) => {
       const room = await db.rooms.findById(roomId);
       if (!room) throw new Error('Room does not exist.');
-      const currentGame = room.retrieveCurrentGame();
+      const currentGame = room.getCurrentGame();
       if (!currentGame) throw new Error('There is no current game.');
 
-      const word = room.retrieveCurrentGame()?.retrieveWord(wordId);
+      const word = room.getCurrentGame()?.getWord(wordId);
       if (!word) throw new Error('Word does not exist.');
 
       word.deselect(userId);
       db.rooms.save(room);
 
-      _listWords(socketIOServer, room.roomId, currentGame);
+      _listWords(socketIOServer, room.getRoomId(), currentGame);
     },
   );
 
@@ -54,28 +54,28 @@ export const RoomsAdapter = (db: DBAccess) => {
       const room = await db.rooms.findById(roomId);
       if (!room) throw new Error('Room does not exist.');
 
-      const currentGame = room.retrieveCurrentGame();
+      const currentGame = room.getCurrentGame();
       if (!currentGame) throw new Error('There is no current game.');
 
-      const word = room.retrieveCurrentGame()?.retrieveWord(wordId);
+      const word = room.getCurrentGame()?.getWord(wordId);
       if (!word) throw new Error('Word does not exist.');
 
       word.claim(userId);
       db.rooms.save(room);
 
-      _listWords(socketIOServer, room.roomId, currentGame);
+      _listWords(socketIOServer, room.getRoomId(), currentGame);
 
-      socket.to(room.roomId).emit(SocketEvent.claimWord, wordId);
+      socket.to(room.getRoomId()).emit(SocketEvent.claimWord, wordId);
 
       setTimeout(async () => {
         const room = await db.rooms.findById(roomId);
         if (!room) throw new Error('Room does not exist.');
 
-        const currentGame = room.retrieveCurrentGame();
+        const currentGame = room.getCurrentGame();
         if (!currentGame) throw new Error('There is no current game.');
 
-        const _user = room.retrieveUser(userId);
-        const _word = room.retrieveCurrentGame()?.retrieveWord(wordId);
+        const _user = room.getPlayer(userId);
+        const _word = room.getCurrentGame()?.getWord(wordId);
 
         if (!_word || !_user || !currentGame) return;
 
@@ -86,17 +86,17 @@ export const RoomsAdapter = (db: DBAccess) => {
         currentGame.deleteWord(wordId);
         db.rooms.save(room);
 
-        _listWords(socketIOServer, room.roomId, currentGame);
+        _listWords(socketIOServer, room.getRoomId(), currentGame);
 
         // loop through each connected socker
         socketIOServer.sockets.sockets.forEach((socket) => {
           const handshake = socket.handshake.query;
-          if ((handshake.roomId as string) !== room.roomId) return;
-          const user = room.retrieveUser((handshake.userId as string) || '');
+          if ((handshake.roomId as string) !== room.getRoomId()) return;
+          const user = room.getPlayer((handshake.userId as string) || '');
           if (!user) return;
           socket.emit(SocketEvent.retrieveScore, {
             score: user.currentScore,
-            highScore: room.retrieveHighScore(),
+            highScore: room.getHighScore(),
           });
         });
       }, 3000);
@@ -108,10 +108,10 @@ export const RoomsAdapter = (db: DBAccess) => {
       const room = await db.rooms.findById(roomId);
       if (!room) throw new Error('Room does not exist.');
 
-      const currentGame = room.retrieveCurrentGame();
+      const currentGame = room.getCurrentGame();
       if (!currentGame) throw new Error('There is no current game.');
 
-      const word = room.retrieveCurrentGame()?.retrieveWord(wordId);
+      const word = room.getCurrentGame()?.getWord(wordId);
       if (!word) throw new Error('Word does not exist.');
       word.accept(userId);
       db.rooms.save(room);
@@ -123,10 +123,10 @@ export const RoomsAdapter = (db: DBAccess) => {
       const room = await db.rooms.findById(roomId);
       if (!room) throw new Error('Room does not exist.');
 
-      const currentGame = room.retrieveCurrentGame();
+      const currentGame = room.getCurrentGame();
       if (!currentGame) throw new Error('There is no current game.');
 
-      const word = room.retrieveCurrentGame()?.retrieveWord(wordId);
+      const word = room.getCurrentGame()?.getWord(wordId);
       if (!word) throw new Error('Word does not exist.');
       word.deny(userId);
       db.rooms.save(room);
@@ -138,14 +138,14 @@ export const RoomsAdapter = (db: DBAccess) => {
       const room = await db.rooms.findById(roomId);
       if (!room) throw new Error('Room does not exist.');
 
-      const currentGame = room.retrieveCurrentGame();
+      const currentGame = room.getCurrentGame();
       if (!currentGame) throw new Error('There is no current game.');
       const _word = createWord({word});
       currentGame.addWord(_word);
 
       db.rooms.save(room);
 
-      _listWords(socketIOServer, room.roomId, currentGame);
+      _listWords(socketIOServer, room.getRoomId(), currentGame);
     },
   );
 
@@ -154,15 +154,15 @@ export const RoomsAdapter = (db: DBAccess) => {
       const room = await db.rooms.findById(roomId);
       if (!room) throw new Error('Room does not exist.');
 
-      const currentGame = room.retrieveCurrentGame();
+      const currentGame = room.getCurrentGame();
       if (!currentGame) throw new Error('There is no current game.');
 
-      const word = room.retrieveCurrentGame()?.retrieveWord(wordId);
+      const word = room.getCurrentGame()?.getWord(wordId);
       if (!word) throw new Error('Word does not exist.');
       word.upvote(userId);
       db.rooms.save(room);
 
-      _listWords(socketIOServer, room.roomId, currentGame);
+      _listWords(socketIOServer, room.getRoomId(), currentGame);
     },
   );
 
@@ -171,15 +171,15 @@ export const RoomsAdapter = (db: DBAccess) => {
       const room = await db.rooms.findById(roomId);
       if (!room) throw new Error('Room does not exist.');
 
-      const currentGame = room.retrieveCurrentGame();
+      const currentGame = room.getCurrentGame();
       if (!currentGame) throw new Error('There is no current game.');
 
-      const word = room.retrieveCurrentGame()?.retrieveWord(wordId);
+      const word = room.getCurrentGame()?.getWord(wordId);
       if (!word) throw new Error('Word does not exist.');
       word.downvote(userId);
       db.rooms.save(room);
 
-      _listWords(socketIOServer, room.roomId, currentGame);
+      _listWords(socketIOServer, room.getRoomId(), currentGame);
     },
   );
 
@@ -187,7 +187,7 @@ export const RoomsAdapter = (db: DBAccess) => {
     async ({roomId, userId, socketIOServer}, message) => {
       const room = await db.rooms.findById(roomId);
       if (!room) throw new Error('Room does not exist.');
-      const user = room.retrieveUser(userId)?.user;
+      const user = room.getPlayer(userId)?.user;
       if (!user) throw new Error('User does not exist');
       const chatMessage = createChatMessage({
         message,
@@ -198,7 +198,7 @@ export const RoomsAdapter = (db: DBAccess) => {
       db.rooms.save(room);
 
       socketIOServer
-        .in(room.roomId)
+        .in(room.getRoomId())
         .emit(SocketEvent.listChatMessages, room.listChatMessages());
     },
   );
@@ -208,7 +208,7 @@ export const RoomsAdapter = (db: DBAccess) => {
     roomId: string,
     currentGame: Game,
   ) => {
-    const words = currentGame.listWords().map((word) => ({
+    const words = currentGame.getWords().map((word) => ({
       word: word.getWord(),
       wordId: word.getWordId(),
       status: word.getStatus(),

@@ -48,6 +48,6 @@ export type Room = {
   roomId: string;
   roomTitle: string;
   currentGame?: Game;
-  users: Player[];
+  players: Player[];
   chatMessages: ChatMessage[];
 };

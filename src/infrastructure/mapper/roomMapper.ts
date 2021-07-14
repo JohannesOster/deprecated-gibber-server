@@ -7,16 +7,16 @@ import {userMapper} from './userMapper';
 
 export const roomMapper: Mapper<ERoom, DBRoom> = {
   toPersistence: (room) => {
-    const currentGame = room.retrieveCurrentGame();
+    const currentGame = room.getCurrentGame();
 
     return {
-      roomId: room.roomId,
-      roomTitle: room.roomTitle,
+      roomId: room.getRoomId(),
+      roomTitle: room.getRoomTitle(),
       currentGame: currentGame
         ? gameMapper.toPersistence(currentGame)
         : undefined,
-      users: room
-        .listUsers()
+      players: room
+        .getPlayers()
         .map(({status, totalScore, currentScore, user}) => ({
           status,
           totalScore,
@@ -36,7 +36,7 @@ export const roomMapper: Mapper<ERoom, DBRoom> = {
       currentGame: raw.currentGame
         ? gameMapper.toDomain(raw.currentGame)
         : undefined,
-      users: raw.users.map(({status, totalScore, currentScore, user}) => ({
+      players: raw.players.map(({status, totalScore, currentScore, user}) => ({
         status,
         totalScore,
         currentScore,

@@ -6,8 +6,8 @@ import {wordMapper} from './wordMapper';
 export const gameMapper: Mapper<EGame, DBGame> = {
   toPersistence: (game) => {
     return {
-      gameId: game.gameId,
-      words: game.listWords().map((word) => wordMapper.toPersistence(word)),
+      gameId: game.getGameId(),
+      words: game.getWords().map((word) => wordMapper.toPersistence(word)),
     };
   },
 

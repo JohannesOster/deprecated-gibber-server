@@ -5,8 +5,8 @@ import {Mapper} from './types';
 export const userMapper: Mapper<EUser, DBUser> = {
   toPersistence: (user) => {
     return {
-      userId: user.userId,
-      username: user.username,
+      userId: user.getUserId(),
+      username: user.getUsername(),
       createdAt: Date.now(), // TODO: fix
       updatedAt: Date.now(),
     };

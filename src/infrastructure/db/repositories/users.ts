@@ -32,14 +32,14 @@ export const UsersRepository = (redis: RedisClient): TUserRepository => {
   };
 
   const save = async (user: EUser) => {
-    let _user = await _findById(user.userId);
+    let _user = await _findById(user.getUserId());
     const users = await all();
 
     if (!_user) {
       const timestamp = Date.now();
       _user = {
-        userId: user.userId,
-        username: user.username,
+        userId: user.getUserId(),
+        username: user.getUsername(),
         createdAt: timestamp,
         updatedAt: timestamp,
       };

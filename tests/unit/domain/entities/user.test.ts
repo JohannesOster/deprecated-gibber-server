@@ -17,7 +17,7 @@ describe('user', () => {
 
     it('automatically assigns unique id', () => {
       const user = createUser({username: 'Dragon'});
-      expect(user.userId).toBeDefined();
+      expect(user.getUserId()).toBeDefined();
     });
   });
 });

@@ -192,7 +192,7 @@ export const RoomsAdapter = (db: DBAccess) => {
       const chatMessage = createChatMessage({
         message,
         senderUserId: userId,
-        senderUsername: user.username,
+        senderUsername: user.getUsername(),
       });
       room.sendChatMessage(chatMessage);
       db.rooms.save(room);

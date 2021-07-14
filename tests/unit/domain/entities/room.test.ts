@@ -32,7 +32,7 @@ describe('room', () => {
 
       room.join(user);
 
-      expect(room.retrieveUser(user.userId)?.user).toEqual(user);
+      expect(room.retrieveUser(user.getUserId())?.user).toEqual(user);
     });
 
     it('Starts new game if second person joins', () => {
@@ -53,8 +53,8 @@ describe('room', () => {
       const user = createUser({username: 'Peter'});
       room.join(user);
 
-      room.leave(user.userId);
-      expect(room.retrieveUser(user.userId)).toBeUndefined();
+      room.leave(user.getUserId());
+      expect(room.retrieveUser(user.getUserId())).toBeUndefined();
     });
 
     it('deselects words on leave', () => {
@@ -138,8 +138,8 @@ describe('room', () => {
       room.join(user);
 
       const message = createChatMessage({
-        senderUserId: user.userId,
-        senderUsername: user.username,
+        senderUserId: user.getUserId(),
+        senderUsername: user.getUsername(),
         message: 'Someone out there?',
       });
 

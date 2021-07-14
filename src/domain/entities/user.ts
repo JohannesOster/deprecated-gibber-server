@@ -1,32 +1,25 @@
-import {ValidationError} from 'domain/ValidationError';
 import {v4 as uuid} from 'uuid';
+import {createUsername} from 'domain/valueObjects';
 
 export type User = {
-  userId: string;
-  username: string;
-  score: number;
+  getUserId: () => string;
+  getUsername: () => string;
+  getScore: () => number;
 };
 
 type InitialValues = {
-  username: string;
   userId?: string;
+  username: string;
   score?: number;
 };
 export const createUser = (init: InitialValues): User => {
-  const {username, userId = uuid(), score = 0} = init;
+  const {userId = uuid(), score = 0} = init;
 
-  // - Validation
-  if (username.length < 3) {
-    throw new ValidationError('Username must be at least 3 characters long.');
-  }
+  const username = createUsername(init.username);
 
-  if (username.length > 30) {
-    throw new ValidationError('Username must be at max 30 characters long.');
-  }
+  const getUserId = () => userId;
+  const getUsername = () => username.value();
+  const getScore = () => score;
 
-  return {
-    username,
-    userId,
-    score,
-  };
+  return {getUsername, getUserId, getScore};
 };

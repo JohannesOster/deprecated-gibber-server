@@ -74,7 +74,9 @@ export const createRoom = (init: InitialValues): Room => {
       );
     }
 
-    const _user = _users.find(({user: u}) => u.userId === user.userId);
+    const _user = _users.find(
+      ({user: u}) => u.getUserId() === user.getUserId(),
+    );
     if (!_user) {
       _users.push({user, status: 'active', totalScore: 0, currentScore: 0});
     } else _user.status = 'active';
@@ -87,7 +89,7 @@ export const createRoom = (init: InitialValues): Room => {
   const retrieveCurrentGame = () => currentGame;
 
   const leave = (userId: string) => {
-    const user = _users.find(({user}) => user.userId === userId);
+    const user = _users.find(({user}) => user.getUserId() === userId);
     if (!user) throw Error('Can not leave room you never joined.');
 
     user.status = 'away';
@@ -96,7 +98,7 @@ export const createRoom = (init: InitialValues): Room => {
       // const scoreBoard = currentGame?.retrieveScoreBoard();
       // if (!scoreBoard) throw Error('Missing scoreboard.');
       // _users.forEach(({user}) => {
-      //   const score = scoreBoard[user.userId];
+      //   const score = scoreBoard[user.getUserId()];
       //   user.addToScore(roomId, score);
       // });
       //currentGame = undefined;
@@ -111,7 +113,7 @@ export const createRoom = (init: InitialValues): Room => {
   };
 
   const retrieveUser = (userId: string) => {
-    return activeUsers().find(({user}) => user.userId === userId);
+    return activeUsers().find(({user}) => user.getUserId() === userId);
   };
 
   const listUsers = () => _users;

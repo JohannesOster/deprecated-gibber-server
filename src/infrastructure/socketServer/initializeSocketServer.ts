@@ -28,8 +28,8 @@ export const initializeSocketServer = (
       socket.emit(SocketEvent.connected, user); // successfully connected
       // room.sendChatMessage(
       //   createChatMessage({
-      //     senderUserId: user.userId,
-      //     senderUsername: user.username,
+      //     senderUserId: user.getUserId(),
+      //     senderUsername: user.getUsername(),
       //     message: 'Testnmessage',
       //   }),
       // );
@@ -47,7 +47,7 @@ export const initializeSocketServer = (
       if (!currentGame) return;
       socket.emit(SocketEvent.retrieveScore, {
         highScore: room.retrieveHighScore(),
-        score: room.retrieveUser(user.userId)?.currentScore,
+        score: room.retrieveUser(user.getUserId())?.currentScore,
       });
 
       socket.emit(SocketEvent.listChatMessages, room.listChatMessages());

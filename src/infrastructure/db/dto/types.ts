@@ -13,7 +13,6 @@ export type ChatMessage = {
   senderUserId: string;
   senderUsername: string; // TODO avoid duplication
   message: string;
-  createdAt: number;
 };
 
 export type Room = {

@@ -74,10 +74,16 @@ describe('room', () => {
       word.select(marianne.userId);
 
       room.leave(marianne.userId);
-      room.retrieveCurrentGame()?.retrieveWord(word.wordId)?.retrieveStatus();
+      room
+        .retrieveCurrentGame()
+        ?.retrieveWord(word.getWordId())
+        ?.retrieveStatus();
 
       expect(
-        room.retrieveCurrentGame()?.retrieveWord(word.wordId)?.retrieveStatus(),
+        room
+          .retrieveCurrentGame()
+          ?.retrieveWord(word.getWordId())
+          ?.retrieveStatus(),
       ).toBe('open');
     });
 

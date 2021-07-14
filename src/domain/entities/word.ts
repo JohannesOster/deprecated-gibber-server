@@ -1,27 +1,24 @@
 import {InvalidOperationError} from 'domain/InvalidOperationError';
-import {ValidationError} from 'domain/ValidationError';
+import {createWordVO} from 'domain/valueObjects/wordVO';
 import {v4 as uuid} from 'uuid';
 
-export type WordStatus =
-  | 'open'
-  | 'selected'
-  | 'claimed'
-  | 'accepted'
-  | 'denied'
-  | 'banned';
+export type WordStatus = 'open' | 'selected' | 'claimed';
 
 export type Word = {
-  wordId: string;
-  word: string; // the actual word
-  _accepted: string[];
-  _denied: string[];
-  _upvotes: string[];
-  _downvotes: string[];
+  getWordId: () => string;
+  getWord: () => string; // the human readable word
 
-  retrieveStatus: () => WordStatus;
-  retrieveSelectedBy: () => string | undefined;
-  createdAt: number;
-  updatedAt: number;
+  getAcceptedBy: () => string[];
+  getDeniedBy: () => string[];
+
+  getUpvotedBy: () => string[];
+  getDownvotedBy: () => string[];
+
+  getStatus: () => WordStatus;
+  getSelectedBy: () => string | undefined;
+
+  getPoints: () => number;
+  getPollResult: () => number;
 
   select: (userId: string) => void;
   deselect: (userId: string) => void;
@@ -33,9 +30,6 @@ export type Word = {
 
   upvote: (userId: string) => void;
   downvote: (userId: string) => void;
-
-  retrievePoints: () => number;
-  retrievePollResult: () => number;
 };
 
 type InitialValues = {
@@ -43,139 +37,143 @@ type InitialValues = {
   wordId?: string;
   status?: WordStatus;
   selectedBy?: string;
-  updatedAt?: number;
-  createdAt?: number;
 
-  _accepted?: string[];
-  _denied?: string[];
-  _upvotes?: string[];
-  _downvotes?: string[];
+  acceptedBy?: string[];
+  deniedBy?: string[];
+  upvotedBy?: string[];
+  downvotedBy?: string[];
 };
 
 export const createWord = (init: InitialValues): Word => {
+  // By default the user gets one point if his claim gets accepted
+  const DEFAULT_POINTS = 1;
+
   const {
     wordId = uuid(),
-    word,
-    updatedAt = Date.now(),
-    createdAt = Date.now(),
 
-    _accepted = [],
-    _denied = [],
-    _upvotes = [],
-    _downvotes = [],
+    acceptedBy = [],
+    deniedBy = [],
+    upvotedBy = [],
+    downvotedBy = [],
   } = init;
   let {selectedBy, status = 'open'} = init;
-  const DEFAULT_POINTS = 1;
+  const word = createWordVO(init.word);
+
+  const getWordId = () => wordId;
+  const getWord = () => word.value();
+  const getUpvotedBy = () => upvotedBy;
+  const getDownvotedBy = () => downvotedBy;
+  const getAcceptedBy = () => acceptedBy;
+  const getDeniedBy = () => deniedBy;
+  const getStatus = () => status;
+  const getSelectedBy = () => selectedBy;
 
   const accept = (userId: string) => {
     if (status !== 'claimed') {
-      throw new InvalidOperationError(
-        'Word has to be claimed before accepting it.',
-      );
+      const msg = 'Word has to be claimed before accepting it.';
+      throw new InvalidOperationError(msg);
     }
 
     if (selectedBy === userId) {
       throw new InvalidOperationError('Cannot accept own claim.');
     }
 
-    _accepted.push(userId);
+    acceptedBy.push(userId);
   };
 
   const deny = (userId: string) => {
     if (status !== 'claimed') {
-      throw new InvalidOperationError(
-        'Word has to be claimed before denying it.',
-      );
+      const msg = 'Word has to be claimed before denying it.';
+      throw new InvalidOperationError(msg);
     }
 
     if (selectedBy === userId) {
       throw new InvalidOperationError('Cannot deny own claim.');
     }
 
-    _denied.push(userId);
+    deniedBy.push(userId);
   };
 
   const upvote = (userId: string) => {
-    if (_upvotes.includes(userId)) {
-      throw new InvalidOperationError('Cannot upvote same word twice');
+    if (upvotedBy.includes(userId)) {
+      throw new InvalidOperationError('Cannot upvote same word twice.');
     }
 
-    if (_downvotes.includes(userId)) {
-      const idx = _downvotes.findIndex((id) => id === userId);
-      _downvotes.splice(idx, 1);
+    if (downvotedBy.includes(userId)) {
+      const idx = downvotedBy.findIndex((id) => id === userId);
+      downvotedBy.splice(idx, 1);
     }
 
-    _upvotes.push(userId);
+    upvotedBy.push(userId);
   };
+
   const downvote = (userId: string) => {
-    if (_downvotes.includes(userId)) {
-      throw new InvalidOperationError('Cannot downvote same word twice');
+    if (downvotedBy.includes(userId)) {
+      throw new InvalidOperationError('Cannot downvote same word twice.');
     }
 
-    if (_upvotes.includes(userId)) {
-      const idx = _upvotes.findIndex((id) => id === userId);
-      _upvotes.splice(idx, 1);
+    if (upvotedBy.includes(userId)) {
+      const idx = upvotedBy.findIndex((id) => id === userId);
+      upvotedBy.splice(idx, 1);
     }
 
-    _downvotes.push(userId);
+    downvotedBy.push(userId);
   };
 
-  // - Validation
-  if (word.length < 3) {
-    throw new ValidationError('Word must be at least 3 characters long.');
-  }
+  const select = (userId: string) => {
+    if (selectedBy) {
+      throw new InvalidOperationError('Word is already selected.');
+    }
 
-  if (word.length > 30) {
-    throw new ValidationError('Word must be at max 30 characters long.');
-  }
+    status = 'selected';
+    selectedBy = userId;
+  };
+  const deselect = (userId: string) => {
+    if (selectedBy !== userId) {
+      throw new InvalidOperationError('You did not select this word.');
+    }
+    status = 'open';
+    selectedBy = undefined;
+  };
+
+  const claim = (userId: string) => {
+    if (selectedBy !== userId) {
+      throw new InvalidOperationError('You did not select this word.');
+    }
+    status = 'claimed';
+  };
+
+  const getPoints = () => {
+    return DEFAULT_POINTS + upvotedBy.length - downvotedBy.length;
+  };
+
+  const getPollResult = () => acceptedBy.length - deniedBy.length;
 
   return {
-    wordId,
-    word,
-    retrieveStatus: () => status,
-    retrieveSelectedBy: () => selectedBy,
-    createdAt,
-    updatedAt,
+    getWordId,
+    getWord,
 
-    select: function (userId: string) {
-      if (selectedBy) {
-        throw new InvalidOperationError('Word is already selected');
-      }
+    getAcceptedBy,
+    getDeniedBy,
 
-      status = 'selected';
-      selectedBy = userId;
-    },
-    deselect: function (userId: string) {
-      if (selectedBy !== userId) {
-        throw new InvalidOperationError('You did not select this word.');
-      }
-      status = 'open';
-      selectedBy = undefined;
-    },
+    getUpvotedBy,
+    getDownvotedBy,
 
-    claim: function (userId: string) {
-      if (selectedBy !== userId) {
-        throw new InvalidOperationError('You did not select this word.');
-      }
-      status = 'claimed';
-    },
+    getStatus,
+    getSelectedBy,
+
+    getPoints,
+    getPollResult,
+
+    select,
+    deselect,
+
+    claim,
 
     accept,
     deny,
 
     upvote,
     downvote,
-
-    retrievePoints: function () {
-      return DEFAULT_POINTS + _upvotes.length - _downvotes.length;
-    },
-    retrievePollResult: function () {
-      return _accepted.length - _denied.length;
-    },
-
-    _accepted,
-    _denied,
-    _downvotes,
-    _upvotes,
   };
 };

@@ -16,8 +16,6 @@ type _User = {
 export type Room = {
   roomId: string;
   roomTitle: string;
-  createdAt: number;
-  updatedAt: number;
 
   retrieveCurrentGame: () => Game | undefined;
 
@@ -41,9 +39,6 @@ type InitialValues = {
   currentGame?: Game;
   users?: _User[];
   chatMessages?: ChatMessage[];
-
-  updatedAt?: number;
-  createdAt?: number;
 };
 
 export const createRoom = (init: InitialValues): Room => {
@@ -56,7 +51,6 @@ export const createRoom = (init: InitialValues): Room => {
   let currentGame = init.currentGame;
   const maxMembers = 100;
   const maxWords = 100;
-  const {createdAt = Date.now(), updatedAt = Date.now()} = init;
 
   // - Validation
   if (roomTitle.length < 3) {
@@ -107,7 +101,7 @@ export const createRoom = (init: InitialValues): Room => {
 
     // reset all that are selected by leaving user
     currentGame?.listWords().forEach((word) => {
-      if (word.retrieveSelectedBy() !== userId) return;
+      if (word.getSelectedBy() !== userId) return;
       word.deselect(userId);
     });
   };
@@ -142,8 +136,6 @@ export const createRoom = (init: InitialValues): Room => {
   return {
     roomId,
     roomTitle,
-    createdAt,
-    updatedAt,
     retrieveCurrentGame,
 
     join,

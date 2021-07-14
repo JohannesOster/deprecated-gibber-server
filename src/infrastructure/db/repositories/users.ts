@@ -41,8 +41,6 @@ export const UsersRepository = (redis: RedisClient): TUserRepository => {
     if (_userIdx < 0) {
       const timestamp = Date.now();
       const _user = userMapper.toPersistence(user);
-      _user.createdAt = timestamp;
-      _user.updatedAt = timestamp;
 
       users.push(_user);
       return new Promise<EUser>((resolve, reject) => {
@@ -58,9 +56,6 @@ export const UsersRepository = (redis: RedisClient): TUserRepository => {
 
     // - update
     const updatedUser = userMapper.toPersistence(user);
-    updatedUser.updatedAt = Date.now();
-    updatedUser.createdAt = _user.createdAt;
-
     // - replace
     users[_userIdx] = updatedUser;
 

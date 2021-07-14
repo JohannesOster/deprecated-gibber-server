@@ -26,9 +26,6 @@ export const roomMapper: Mapper<ERoom, DBRoom> = {
       chatMessages: room
         .listChatMessages()
         .map((message) => chatMessageMapper.toPersistence(message)),
-
-      createdAt: room.createdAt,
-      updatedAt: room.updatedAt,
     };
   },
 
@@ -48,9 +45,6 @@ export const roomMapper: Mapper<ERoom, DBRoom> = {
       chatMessages: raw.chatMessages.map((message) =>
         chatMessageMapper.toDomain(message),
       ),
-
-      createdAt: raw.createdAt,
-      updatedAt: raw.updatedAt,
     });
   },
 };

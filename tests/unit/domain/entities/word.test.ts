@@ -19,7 +19,7 @@ describe('word', () => {
 
     it('automatically assigns unique id', () => {
       const word = createWord({word: 'Dragon'});
-      expect(word.wordId).toBeDefined();
+      expect(word.getWordId()).toBeDefined();
     });
   });
 
@@ -28,10 +28,10 @@ describe('word', () => {
       const word = createWord({word: 'Dragon'});
       const user = createUser({username: 'Miriam die 2te'});
 
-      const defaultPoints = word.retrievePoints();
+      const defaultPoints = word.getPoints();
       word.upvote(user.getUserId());
 
-      expect(word.retrievePoints()).toBeGreaterThan(defaultPoints);
+      expect(word.getPoints()).toBeGreaterThan(defaultPoints);
     });
 
     it('throws if upvote the same word twice', () => {
@@ -50,7 +50,7 @@ describe('word', () => {
       word.downvote(user.getUserId());
       word.upvote(user.getUserId());
 
-      expect(word.retrievePoints()).toBe(2);
+      expect(word.getPoints()).toBe(2);
     });
   });
 
@@ -59,10 +59,10 @@ describe('word', () => {
       const word = createWord({word: 'Fußfessel'});
       const user = createUser({username: 'Tarantel'});
 
-      const defaultPoints = word.retrievePoints();
+      const defaultPoints = word.getPoints();
       word.downvote(user.getUserId());
 
-      expect(word.retrievePoints()).toBeLessThan(defaultPoints);
+      expect(word.getPoints()).toBeLessThan(defaultPoints);
     });
 
     it('throws if upvote the same word twice', () => {
@@ -81,7 +81,7 @@ describe('word', () => {
       word.upvote(user.getUserId());
       word.downvote(user.getUserId());
 
-      expect(word.retrievePoints()).toBe(0);
+      expect(word.getPoints()).toBe(0);
     });
   });
 
@@ -92,7 +92,7 @@ describe('word', () => {
 
       word.select(user.getUserId());
 
-      expect(word.retrieveSelectedBy()).toBe(user.getUserId());
+      expect(word.getSelectedBy()).toBe(user.getUserId());
     });
 
     it('update status on select', () => {
@@ -101,7 +101,7 @@ describe('word', () => {
 
       word.select(user.getUserId());
 
-      expect(word.retrieveStatus()).toBe('selected');
+      expect(word.getStatus()).toBe('selected');
     });
 
     it('throws on reselection by same user', () => {
@@ -133,7 +133,7 @@ describe('word', () => {
       word.select(user.getUserId());
 
       word.deselect(user.getUserId());
-      expect(word.retrieveSelectedBy()).toBeUndefined();
+      expect(word.getSelectedBy()).toBeUndefined();
     });
 
     it('throws if word is not selected', () => {
@@ -163,7 +163,7 @@ describe('word', () => {
       word.select(user.getUserId());
 
       word.deselect(user.getUserId());
-      expect(word.retrieveSelectedBy()).toBeUndefined();
+      expect(word.getSelectedBy()).toBeUndefined();
     });
 
     it('throws if word is not selected', () => {
@@ -193,7 +193,7 @@ describe('word', () => {
       word.select(user.getUserId());
       word.claim(user.getUserId());
 
-      expect(word.retrieveStatus()).toBe('claimed');
+      expect(word.getStatus()).toBe('claimed');
     });
 
     it('throws on claim before select', () => {

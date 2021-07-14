@@ -53,10 +53,10 @@ export const initializeSocketServer = (
       socket.emit(SocketEvent.listChatMessages, room.listChatMessages());
 
       const words = currentGame.listWords().map((word) => ({
-        word: word.word,
-        wordId: word.wordId,
-        status: word.retrieveStatus(),
-        points: word.retrievePoints(),
+        word: word.getWord(),
+        wordId: word.getWordId(),
+        status: word.getStatus(),
+        points: word.getPoints(),
       }));
       socket.emit(SocketEvent.listWords, words);
     } catch (error) {

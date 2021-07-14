@@ -9,9 +9,6 @@ export const chatMessageMapper: Mapper<EChatMessage, DBChatMessage> = {
       message: chatMessage.message,
       senderUserId: chatMessage.senderUserId,
       senderUsername: chatMessage.senderUsername,
-
-      createdAt: chatMessage.createdAt,
-      updatedAt: chatMessage.updatedAt,
     };
   },
 
@@ -21,9 +18,6 @@ export const chatMessageMapper: Mapper<EChatMessage, DBChatMessage> = {
       message: raw.message,
       senderUserId: raw.senderUserId,
       senderUsername: raw.senderUsername,
-
-      createdAt: raw.createdAt,
-      updatedAt: raw.updatedAt,
     });
   },
 };

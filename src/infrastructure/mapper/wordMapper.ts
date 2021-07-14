@@ -5,17 +5,15 @@ import {Mapper} from './types';
 export const wordMapper: Mapper<EWord, DBWord> = {
   toPersistence: (word) => {
     return {
-      wordId: word.wordId,
-      word: word.word,
-      createdAt: word.createdAt,
-      updatedAt: word.updatedAt,
-      selectedBy: word.retrieveSelectedBy(),
-      status: word.retrieveStatus(),
+      wordId: word.getWordId(),
+      word: word.getWord(),
+      selectedBy: word.getSelectedBy(),
+      status: word.getStatus(),
 
-      _accepted: word._accepted,
-      _denied: word._denied,
-      _downvotes: word._downvotes,
-      _upvotes: word._upvotes,
+      acceptedBy: word.getAcceptedBy(),
+      deniedBy: word.getAcceptedBy(),
+      upvotedBy: word.getUpvotedBy(),
+      downvotedBy: word.getDownvotedBy(),
     };
   },
 
@@ -23,15 +21,13 @@ export const wordMapper: Mapper<EWord, DBWord> = {
     return createWord({
       wordId: raw.wordId,
       word: raw.word,
-      createdAt: raw.createdAt,
-      updatedAt: raw.createdAt,
       selectedBy: raw.selectedBy,
       status: raw.status,
 
-      _accepted: raw._accepted,
-      _denied: raw._denied,
-      _downvotes: raw._downvotes,
-      _upvotes: raw._upvotes,
+      acceptedBy: raw.acceptedBy,
+      deniedBy: raw.deniedBy,
+      upvotedBy: raw.upvotedBy,
+      downvotedBy: raw.downvotedBy,
     });
   },
 };

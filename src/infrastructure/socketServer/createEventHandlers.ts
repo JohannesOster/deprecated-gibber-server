@@ -58,10 +58,10 @@ export const createEventHandlers = (
         const currentGame = room.retrieveCurrentGame();
         if (!currentGame) return;
         const words = currentGame.listWords().map((word) => ({
-          word: word.word,
-          wordId: word.wordId,
-          status: word.retrieveStatus(),
-          points: word.retrievePoints(),
+          word: word.getWord(),
+          wordId: word.getWordId(),
+          status: word.getStatus(),
+          points: word.getPoints(),
         }));
         socketIOServer.in(roomId).emit(SocketEvent.listWords, words);
       },

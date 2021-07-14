@@ -17,7 +17,7 @@ describe('room', () => {
       });
 
       game.addWord(createWord({word: 'Alfonso der Weiße'}));
-      expect(game.retrieveWord(word.wordId)).toBeUndefined();
+      expect(game.retrieveWord(word.getWordId())).toBeUndefined();
     });
   });
 
@@ -26,8 +26,8 @@ describe('room', () => {
       const word = createWord({word: 'Banana'});
       const game = createGame({words: [word]});
 
-      game.deleteWord(word.wordId);
-      expect(game.retrieveWord(word.wordId)).toBeUndefined();
+      game.deleteWord(word.getWordId());
+      expect(game.retrieveWord(word.getWordId())).toBeUndefined();
     });
   });
 });

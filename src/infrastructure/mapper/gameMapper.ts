@@ -8,8 +8,6 @@ export const gameMapper: Mapper<EGame, DBGame> = {
     return {
       gameId: game.gameId,
       words: game.listWords().map((word) => wordMapper.toPersistence(word)),
-      createdAt: game.createdAt,
-      updatedAt: game.updatedAt,
     };
   },
 
@@ -17,8 +15,6 @@ export const gameMapper: Mapper<EGame, DBGame> = {
     return createGame({
       gameId: raw.gameId,
       words: raw.words.map((word) => wordMapper.toDomain(word)),
-      createdAt: raw.createdAt,
-      updatedAt: raw.updatedAt,
     });
   },
 };

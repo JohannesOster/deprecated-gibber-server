@@ -79,8 +79,8 @@ export const RoomsAdapter = (db: DBAccess) => {
 
         if (!_word || !_user || !currentGame) return;
 
-        const sign = (_word.retrievePollResult() || 0) < 1 ? -1 : 1;
-        const points = sign * _word.retrievePoints();
+        const sign = (_word.getPollResult() || 0) < 1 ? -1 : 1;
+        const points = sign * _word.getPoints();
         _user.currentScore += points;
 
         currentGame.deleteWord(wordId);
@@ -209,10 +209,10 @@ export const RoomsAdapter = (db: DBAccess) => {
     currentGame: Game,
   ) => {
     const words = currentGame.listWords().map((word) => ({
-      word: word.word,
-      wordId: word.wordId,
-      status: word.retrieveStatus(),
-      points: word.retrievePoints(),
+      word: word.getWord(),
+      wordId: word.getWordId(),
+      status: word.getStatus(),
+      points: word.getPoints(),
     }));
     socketIOServer.in(roomId).emit(SocketEvent.listWords, words);
   };

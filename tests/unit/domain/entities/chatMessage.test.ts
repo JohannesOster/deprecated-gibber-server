@@ -7,6 +7,7 @@ describe('ChatMessage', () => {
     it('automatically assigns unique id', () => {
       const chatMessage = createChatMessage({
         senderUserId: v4(),
+        senderUsername: 'Markus',
         message: 'Hey out there!',
       });
       expect(chatMessage.chatMessageId).toBeDefined();
@@ -14,7 +15,11 @@ describe('ChatMessage', () => {
 
     it('throws if message is empty', () => {
       const factory = () =>
-        createChatMessage({senderUserId: v4(), message: ''});
+        createChatMessage({
+          senderUserId: v4(),
+          message: '',
+          senderUsername: 'Miriam',
+        });
       expect(factory).toThrow(ValidationError);
     });
   });

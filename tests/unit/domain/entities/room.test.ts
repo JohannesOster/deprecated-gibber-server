@@ -32,7 +32,7 @@ describe('room', () => {
 
       room.join(user);
 
-      expect(room.retrieveUser(user.userId)).toEqual(user);
+      expect(room.retrieveUser(user.userId)?.user).toEqual(user);
     });
 
     it('Starts new game if second person joins', () => {
@@ -103,7 +103,7 @@ describe('room', () => {
       room.join(markus);
 
       const score = 50;
-      room.retrieveCurrentGame()?.updateScore(marianne.userId, score);
+      room.retrieveUser(marianne.userId)!.currentScore = score;
 
       room.leave(markus.userId);
 
@@ -116,12 +116,13 @@ describe('room', () => {
     it('Throws if max members is reached', () => {
       const room = createRoom({
         roomTitle: 'VO Debatten der Gender Studies',
-        maxMembers: 2,
       });
 
       const addUser = () => room.join(createUser({username: 'Dumbledore'}));
       room.join(createUser({username: 'Snape'}));
       room.join(createUser({username: 'Harry'}));
+
+      new Array(98).fill(0).forEach(() => addUser());
       // source: https://youtu.be/Tx1XIm6q4r4?t=75
 
       expect(addUser).toThrow(InvalidOperationError);
@@ -132,7 +133,6 @@ describe('room', () => {
     it('adds new message on sendChatMessage', () => {
       const room = createRoom({
         roomTitle: 'VO Debatten der Gender Studies',
-        maxMembers: 2,
       });
       const user = createUser({username: 'Maria'});
       room.join(user);

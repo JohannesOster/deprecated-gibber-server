@@ -5,7 +5,7 @@ describe('room', () => {
   describe('factory', () => {
     it('automatically assigns unique id', () => {
       const game = createGame();
-      expect(game.gameId).toBeDefined();
+      expect(game.getGameId()).toBeDefined();
     });
   });
 

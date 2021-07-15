@@ -119,9 +119,9 @@ describe('word', () => {
       const peter = createUser({username: 'Peter'});
       const markus = createUser({username: 'Markus'});
 
-      word.select(peter.userId);
+      word.select(peter.getUserId());
 
-      const select = () => word.select(markus.userId);
+      const select = () => word.select(markus.getUserId());
       expect(select).toThrowError(InvalidOperationError);
     });
   });
@@ -149,9 +149,9 @@ describe('word', () => {
       const peter = createUser({username: 'Peter'});
       const markus = createUser({username: 'Markus'});
 
-      word.select(peter.userId);
+      word.select(peter.getUserId());
 
-      const deselect = () => word.deselect(markus.userId);
+      const deselect = () => word.deselect(markus.getUserId());
       expect(deselect).toThrowError(InvalidOperationError);
     });
   });
@@ -179,9 +179,9 @@ describe('word', () => {
       const peter = createUser({username: 'Peter'});
       const markus = createUser({username: 'Markus'});
 
-      word.select(peter.userId);
+      word.select(peter.getUserId());
 
-      const deselect = () => word.deselect(markus.userId);
+      const deselect = () => word.deselect(markus.getUserId());
       expect(deselect).toThrowError(InvalidOperationError);
     });
   });
@@ -211,11 +211,11 @@ describe('word', () => {
       const word = createWord({word: 'Fahrradpumpe'});
       const markus = createUser({username: 'Markus'});
       const severin = createUser({username: 'Severin'});
-      word.select(markus.userId);
-      word.claim(markus.userId);
+      word.select(markus.getUserId());
+      word.claim(markus.getUserId());
 
-      word.accept(severin.userId);
-      expect(word.retrievePollResult()).toBe(1);
+      word.accept(severin.getUserId());
+      expect(word.getPollResult()).toBe(1);
     });
 
     it('throws on accept unclaimed word', () => {
@@ -223,8 +223,8 @@ describe('word', () => {
       const markus = createUser({username: 'Markus'});
       const severin = createUser({username: 'Severin'});
 
-      word.select(markus.userId);
-      const accept = () => word.accept(severin.userId);
+      word.select(markus.getUserId());
+      const accept = () => word.accept(severin.getUserId());
 
       expect(accept).toThrowError(InvalidOperationError);
     });
@@ -246,11 +246,11 @@ describe('word', () => {
       const word = createWord({word: 'Fahrradpumpe'});
       const markus = createUser({username: 'Markus'});
       const severin = createUser({username: 'Severin'});
-      word.select(markus.userId);
-      word.claim(markus.userId);
+      word.select(markus.getUserId());
+      word.claim(markus.getUserId());
 
-      word.deny(severin.userId);
-      expect(word.retrievePollResult()).toBe(-1);
+      word.deny(severin.getUserId());
+      expect(word.getPollResult()).toBe(-1);
     });
 
     it('throws on deny unclaimed word', () => {
@@ -258,8 +258,8 @@ describe('word', () => {
       const markus = createUser({username: 'Markus'});
       const severin = createUser({username: 'Severin'});
 
-      word.select(markus.userId);
-      const deny = () => word.deny(severin.userId);
+      word.select(markus.getUserId());
+      const deny = () => word.deny(severin.getUserId());
 
       expect(deny).toThrowError(InvalidOperationError);
     });

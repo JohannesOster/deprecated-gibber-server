@@ -12,7 +12,7 @@ export const userMapper: Mapper<EUser, DBUser> = {
 
   toDomain: (raw) => {
     return createUser({
-      userId: raw.userId,
+      userId: raw.getUserId(),
       username: raw.username,
     });
   },

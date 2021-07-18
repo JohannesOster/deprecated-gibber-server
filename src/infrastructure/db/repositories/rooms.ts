@@ -1,9 +1,6 @@
-import {RedisClient} from 'redis';
 import {Repository} from './types';
 import {Room as ERoom} from 'domain/entities/room';
-import {Room as DBRoom} from '../types';
-
-import {promisify} from 'util';
+import {Database, Game, Room as DBRoom, Room} from '../types';
 import {roomMapper} from 'infrastructure/mapper/roomMapper';
 
 type TRoomsRepository = Repository<ERoom> & {
@@ -11,22 +8,31 @@ type TRoomsRepository = Repository<ERoom> & {
   list: () => Promise<ERoom[]>;
 };
 
-export const RoomsRepository = (redis: RedisClient): TRoomsRepository => {
-  const REDIS_KEY = 'rooms';
-  const getAsync = promisify(redis.get).bind(redis);
+export const RoomsRepository = (db: Database): TRoomsRepository => {
+  const DB_KEY = 'rooms';
 
-  const all = () => {
-    return getAsync(REDIS_KEY).then((rooms) => {
-      if (!rooms) return [];
-      const _rooms = JSON.parse(rooms);
-      if (Array.isArray(_rooms)) return _rooms;
-      return [_rooms];
-    });
+  const all = (): Promise<DBRoom[]> => {
+    return db
+      .get(DB_KEY)
+      .then((rooms) => {
+        if (!rooms) return [];
+        return Array.isArray(rooms) ? rooms : [rooms];
+      })
+      .then(async (rooms) => {
+        return await Promise.all(
+          rooms.map(async (room) => {
+            let currentGame = await (room.currentGameId
+              ? db.get<Game>(room.currentGameId)
+              : Promise.resolve(undefined));
+            return {room, currentGame};
+          }),
+        );
+      });
   };
 
   const findById = async (roomId: string) => {
     const rooms = await all();
-    const room = rooms.find((room) => room.getRoomId() === roomId);
+    const room = rooms.find(({room}) => room.roomId === roomId);
     if (!room) return Promise.resolve(undefined);
 
     return Promise.resolve(roomMapper.toDomain(room));
@@ -40,28 +46,25 @@ export const RoomsRepository = (redis: RedisClient): TRoomsRepository => {
 
   const save = async (room: ERoom) => {
     const rooms = await all();
-    let _room = await findById(room.getRoomId());
-    if (!_room) {
+    let _roomIdx = rooms.findIndex(
+      ({room: _room}) => _room.roomId === room.getRoomId(),
+    );
+
+    if (_roomIdx < 0) {
       const newRoom = roomMapper.toPersistence(room);
       rooms.push(newRoom);
 
-      return new Promise<ERoom>((resolve, reject) => {
-        redis.set(REDIS_KEY, JSON.stringify(rooms), (error) => {
-          if (error) return reject(error);
-
-          resolve(roomMapper.toDomain(newRoom!));
-        });
+      return db.set(DB_KEY, rooms).then(() => {
+        return roomMapper.toDomain(newRoom);
       });
     }
 
-    const updated = roomMapper.toPersistence(room);
+    const updatedRoom = roomMapper.toPersistence(room);
 
-    return new Promise<ERoom>((resolve, reject) => {
-      redis.set(REDIS_KEY, JSON.stringify(updated), (error) => {
-        if (error) return reject(error);
-        resolve(room);
-      });
-    });
+    // - replace
+    rooms[_roomIdx] = updatedRoom;
+
+    return db.set(DB_KEY, rooms).then(() => room);
   };
 
   return {save, list, findById};

@@ -7,6 +7,11 @@ export interface DBAccess {
   rooms: ReturnType<typeof RoomsRepository>;
 }
 
+export interface Database {
+  get: <T>(key: string) => Promise<T | undefined>;
+  set: <T>(key: string, value: T) => Promise<undefined>;
+}
+
 export type User = {
   userId: string;
   username: string;
@@ -45,9 +50,12 @@ export type Player = {
 };
 
 export type Room = {
-  roomId: string;
-  roomTitle: string;
+  room: {
+    roomId: string;
+    roomTitle: string;
+    currentGameId?: string;
+    players: Player[];
+    chatMessages: ChatMessage[];
+  };
   currentGame?: Game;
-  players: Player[];
-  chatMessages: ChatMessage[];
 };

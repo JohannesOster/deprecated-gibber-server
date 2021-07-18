@@ -1,6 +1,5 @@
-import {RedisClient} from 'redis';
 import {User as EUser} from 'domain/entities/user';
-import {User as DBUser} from '../types';
+import {Database, User as DBUser} from '../types';
 import {Repository} from './types';
 import {userMapper} from 'infrastructure/mapper';
 
@@ -8,19 +7,13 @@ type TUserRepository = Repository<EUser> & {
   findById: (userId: string) => Promise<EUser | undefined>;
 };
 
-export const UsersRepository = (redis: RedisClient): TUserRepository => {
-  const REDIS_KEY = 'users';
+export const UsersRepository = (db: Database): TUserRepository => {
+  const DB_KEY = 'users';
 
-  const all = () => {
-    return new Promise<DBUser[]>((resolve, reject) => {
-      redis.get(REDIS_KEY, (error, result) => {
-        if (error) return reject(error);
-        if (!result) return resolve([]);
-        const users = JSON.parse(result);
-        /* If array has only one element JSON.parse returns this element as object. */
-        if (!Array.isArray(users)) return resolve([users]);
-        resolve(users);
-      });
+  const all = (): Promise<DBUser[]> => {
+    return db.get(DB_KEY).then((result) => {
+      if (!result) return [];
+      return Array.isArray(result) ? result : [];
     });
   };
 
@@ -39,20 +32,14 @@ export const UsersRepository = (redis: RedisClient): TUserRepository => {
     let _userIdx = users.findIndex(({userId}) => userId === user.getUserId());
 
     if (_userIdx < 0) {
-      const timestamp = Date.now();
       const _user = userMapper.toPersistence(user);
 
       users.push(_user);
-      return new Promise<EUser>((resolve, reject) => {
-        redis.set(REDIS_KEY, JSON.stringify(users), (error) => {
-          if (error) return reject(error);
-          resolve(user);
-        });
+
+      return db.set(DB_KEY, users).then(() => {
+        return userMapper.toDomain(_user);
       });
     }
-
-    // - fetch
-    const _user = users[_userIdx];
 
     // - update
     const updatedUser = userMapper.toPersistence(user);
@@ -60,12 +47,7 @@ export const UsersRepository = (redis: RedisClient): TUserRepository => {
     users[_userIdx] = updatedUser;
 
     // - persist
-    return new Promise<EUser>((resolve, reject) => {
-      redis.set(REDIS_KEY, JSON.stringify(updatedUser), (error) => {
-        if (error) return reject(error);
-        resolve(userMapper.toDomain(updatedUser));
-      });
-    });
+    return db.set(DB_KEY, users).then(() => user);
   };
 
   return {save, findById};

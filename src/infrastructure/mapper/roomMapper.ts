@@ -8,41 +8,43 @@ import {userMapper} from './userMapper';
 export const roomMapper: Mapper<ERoom, DBRoom> = {
   toPersistence: (room) => {
     const currentGame = room.getCurrentGame();
+    const currentGameMapped = currentGame
+      ? gameMapper.toPersistence(currentGame)
+      : undefined;
 
     return {
-      roomId: room.getRoomId(),
-      roomTitle: room.getRoomTitle(),
-      currentGame: currentGame
-        ? gameMapper.toPersistence(currentGame)
-        : undefined,
-      players: room
-        .getPlayers()
-        .map(({status, totalScore, currentScore, user}) => ({
-          status,
-          totalScore,
-          currentScore,
-          user: userMapper.toPersistence(user),
-        })),
-      chatMessages: room
-        .listChatMessages()
-        .map((message) => chatMessageMapper.toPersistence(message)),
+      room: {
+        roomId: room.getRoomId(),
+        roomTitle: room.getRoomTitle(),
+        currentGameId: currentGame?.getGameId(),
+        players: room
+          .getPlayers()
+          .map(({status, totalScore, currentScore, user}) => ({
+            status,
+            totalScore,
+            currentScore,
+            user: userMapper.toPersistence(user),
+          })),
+        chatMessages: room
+          .listChatMessages()
+          .map((message) => chatMessageMapper.toPersistence(message)),
+      },
+      currentGame: currentGameMapped;
     };
   },
 
-  toDomain: (raw) => {
+  toDomain: ({room, currentGame}) => {
     return createRoom({
-      roomId: raw.roomId,
-      roomTitle: raw.roomTitle,
-      currentGame: raw.currentGame
-        ? gameMapper.toDomain(raw.currentGame)
-        : undefined,
-      players: raw.players.map(({status, totalScore, currentScore, user}) => ({
+      roomId: room.roomId,
+      roomTitle: room.roomTitle,
+      currentGame: currentGame ? gameMapper.toDomain(currentGame) : undefined,
+      players: room.players.map(({status, totalScore, currentScore, user}) => ({
         status,
         totalScore,
         currentScore,
         user: userMapper.toDomain(user),
       })),
-      chatMessages: raw.chatMessages.map((message) =>
+      chatMessages: room.chatMessages.map((message) =>
         chatMessageMapper.toDomain(message),
       ),
     });

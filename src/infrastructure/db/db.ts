@@ -1,6 +1,5 @@
 import {createClient, RedisClient} from 'redis';
-import {UsersRepository} from './repositories';
-import {RoomsRepository} from './repositories/rooms';
+import {UsersRepository, RoomsRepository} from './repositories';
 import {DBAccess, Database} from './types';
 
 const createDB = (client: RedisClient): Database => {

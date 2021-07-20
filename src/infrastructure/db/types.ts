@@ -1,6 +1,5 @@
 import {WordStatus} from 'domain/entities';
-import {RoomsRepository} from './repositories/rooms';
-import {UsersRepository} from './repositories/users';
+import {RoomsRepository, UsersRepository} from './repositories/';
 
 export interface DBAccess {
   users: ReturnType<typeof UsersRepository>;

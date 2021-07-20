@@ -1,2 +1,2 @@
-export * from './rooms';
-export * from './users';
+export * from './usersRepository';
+export * from './roomsRepository';

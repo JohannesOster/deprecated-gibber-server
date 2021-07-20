@@ -48,10 +48,26 @@ export const createEventHandlers = (
       handler: (args) => adapter.sendChatMessage(connectionDetils, args),
     },
     {
+      key: SocketEvent.requestChatMessages,
+      handler: (args) => adapter.requestChatMessages(connectionDetils, args),
+    },
+    {
       key: SocketEvent.disconnect,
-      handler: () => {
-        const {room, user} = connectionDetils;
-        room.leave(user.userId);
+      handler: async () => {
+        const {roomId, userId, socketIOServer} = connectionDetils;
+        const room = await db.rooms.findById(roomId);
+        if (!room) return;
+        room.leave(userId);
+        db.rooms.save(room);
+        const currentGame = room.getCurrentGame();
+        if (!currentGame) return;
+        const words = currentGame.getWords().map((word) => ({
+          word: word.getWord(),
+          wordId: word.getWordId(),
+          status: word.getStatus(),
+          points: word.getPoints(),
+        }));
+        socketIOServer.in(roomId).emit(SocketEvent.listWords, words);
       },
     },
   ];

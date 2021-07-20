@@ -6,7 +6,6 @@ export type ChatMessage = {
   senderUserId: string;
   senderUsername: string;
   message: string;
-  createdAt: number;
 };
 
 type InitialValues = {
@@ -18,7 +17,6 @@ type InitialValues = {
 
 export const createChatMessage = (init: InitialValues): ChatMessage => {
   const {chatMessageId = uuid(), senderUserId, senderUsername, message} = init;
-  const createdAt = Date.now();
 
   if (message.length < 1) {
     throw new ValidationError('Message requires at least one character.');
@@ -29,6 +27,5 @@ export const createChatMessage = (init: InitialValues): ChatMessage => {
     senderUserId,
     senderUsername,
     message,
-    createdAt,
   };
 };

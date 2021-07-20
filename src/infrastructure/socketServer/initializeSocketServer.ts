@@ -16,42 +16,49 @@ export const initializeSocketServer = (
     const {userId, roomId} = socket.handshake.query as Query;
 
     try {
-      const user = await db.users.retrieve(userId as string);
+      const user = await db.users.findById(userId as string);
       if (!user) throw new Error('Can not join room prior to registration');
-
-      const room = db.rooms.retrieve(roomId);
+      const room = await db.rooms.findById(roomId);
       if (!room) throw new Error('Room does not exist.');
 
       room.join(user);
-      socket.join(room.roomId);
-      socket.emit(SocketEvent.connected, user); // successfully connected
+      db.rooms.save(room);
 
+      socket.join(room.getRoomId());
+      socket.emit(SocketEvent.connected, user); // successfully connected
       // room.sendChatMessage(
       //   createChatMessage({
-      //     senderUserId: user.userId,
-      //     senderUsername: user.username,
+      //     senderUserId: user.getUserId(),
+      //     senderUsername: user.getUsername(),
       //     message: 'Testnmessage',
       //   }),
       // );
-
       // connect event handlers
-      const cDetails: ConnectionDetails = {socketIOServer, socket, user, room};
+      const cDetails: ConnectionDetails = {
+        socketIOServer,
+        socket,
+        userId,
+        roomId,
+      };
       const eventHandlers = createEventHandlers(cDetails, db);
       eventHandlers.forEach(({key, handler}) => socket.on(key, handler));
-
       // initial steps after joining a room
-      const currentGame = room.retrieveCurrentGame();
+      const currentGame = room.getCurrentGame();
       if (!currentGame) return;
-      socketIOServer
-        .in(room.roomId)
-        .emit(
-          SocketEvent.retrieveScore,
-          currentGame.retrieveScore(user.userId),
-        );
+      socket.emit(SocketEvent.retrieveScore, {
+        highScore: room.getHighScore(),
+        score: room.getPlayer(user.getUserId())?.currentScore,
+      });
 
-      socketIOServer
-        .in(room.roomId)
-        .emit(SocketEvent.listChatMessages, room.listChatMessages());
+      socket.emit(SocketEvent.listChatMessages, room.listChatMessages());
+
+      const words = currentGame.getWords().map((word) => ({
+        word: word.getWord(),
+        wordId: word.getWordId(),
+        status: word.getStatus(),
+        points: word.getPoints(),
+      }));
+      socket.emit(SocketEvent.listWords, words);
     } catch (error) {
       console.error(error);
       socket.emit('error', error.message);

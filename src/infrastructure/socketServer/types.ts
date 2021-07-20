@@ -17,6 +17,7 @@ export enum SocketEvent {
 
   retrieveScore = 'retrieveScore',
 
+  requestChatMessages = 'requestChatMessages',
   listChatMessages = 'listChatMessages',
   sendChatMessage = 'sendChatMessage',
 

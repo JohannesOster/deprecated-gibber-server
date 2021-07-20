@@ -1,13 +1,11 @@
-import {Room} from 'domain/entities/room';
-import {User} from 'domain/entities/user';
 import {Server, Socket} from 'socket.io';
 
 export type ConnectionDetails = {
   socketIOServer: Server;
   socket: Socket;
 
-  room: Room;
-  user: User;
+  roomId: string;
+  userId: string;
 };
 
 export type EventHandler<T> = (

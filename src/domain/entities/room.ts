@@ -1,25 +1,31 @@
 import {InvalidOperationError} from 'domain/InvalidOperationError';
-import {ValidationError} from 'domain/ValidationError';
+import {createRoomTitle} from 'domain/valueObjects/roomTitle';
 import {v4 as uuid} from 'uuid';
 import {ChatMessage} from './chatMessage';
 import {createGame, Game} from './game';
 import {User} from './user';
 
-export type Room = {
-  roomId: string;
-  roomTitle: string;
-  createdAt: number;
-  /** Maximal number of users joining this room */
-  maxMembers: number;
-  /** The maximal number of words selectable in this room */
-  maxWords: number;
+type PlayerStatus = 'active' | 'away';
+type Player = {
+  status: PlayerStatus;
+  currentScore: number;
+  totalScore: number;
+  user: User;
+};
 
-  retrieveCurrentGame: () => Game | undefined;
+export type Room = {
+  getRoomId: () => string;
+  getRoomTitle: () => string;
+
+  getCurrentGame: () => Game | undefined;
+
+  getPlayer: (userId: string) => Player | undefined;
+  getPlayers: () => Player[];
+
+  getHighScore: () => number;
 
   join: (user: User) => void;
   leave: (userId: string) => void;
-
-  retrieveUser: (userId: string) => User | undefined;
 
   sendChatMessage: (message: ChatMessage) => void;
   retrieveChatMessage: (messageId: string) => ChatMessage | undefined;
@@ -29,105 +35,99 @@ export type Room = {
 type InitialValues = {
   roomId?: string;
   roomTitle: string;
-  maxMembers?: number;
-  maxWords?: number;
+
+  currentGame?: Game;
+  players?: Player[];
+  chatMessages?: ChatMessage[];
 };
 
 export const createRoom = (init: InitialValues): Room => {
-  const {roomId = uuid(), roomTitle, maxMembers = 100, maxWords = 100} = init;
-  type UserStatus = 'active' | 'away';
-  const _users: {user: User; status: UserStatus}[] = [];
-  const createdAt = Date.now();
+  const MAX_PLAYERS = 100;
 
-  let currentGame: Game | undefined;
+  const {roomId = uuid(), chatMessages = [], players: _players = []} = init;
+  const roomTitle = createRoomTitle(init.roomTitle);
+  let currentGame = init.currentGame;
 
-  const messages: ChatMessage[] = [];
+  const getRoomId = () => roomId;
+  const getRoomTitle = () => roomTitle.value();
 
-  // - Validation
-  if (roomTitle.length < 3) {
-    throw new ValidationError('RoomTitle must be at least 3 characters long.');
-  }
+  const getCurrentGame = () => currentGame;
 
-  if (roomTitle.length > 30) {
-    throw new ValidationError('RoomTitle must be at max 30 characters long.');
-  }
+  const getPlayers = () => _players;
+  const getPlayer = (userId: string) => {
+    return activePlayers().find(({user}) => user.getUserId() === userId);
+  };
+
+  const getHighScore = () => {
+    const scores = _players.map(({currentScore}) => currentScore);
+    return Math.max(...scores);
+  };
 
   const join = (user: User) => {
-    if (_users.length >= maxMembers) {
+    if (_players.length >= MAX_PLAYERS) {
       throw new InvalidOperationError(
-        `Maximal amount of members (=${maxMembers}) reached. Cannot join.`,
+        `Maximal amount of members (=${MAX_PLAYERS}) reached. Cannot join.`,
       );
     }
 
-    const _user = _users.find(({user: u}) => u.userId === user.userId);
-    if (!_user) _users.push({user, status: 'active'});
-    else _user.status = 'active';
+    const _player = _players.find(
+      ({user: u}) => u.getUserId() === user.getUserId(),
+    );
 
-    if (activeUsers().length >= 2 && !currentGame) {
-      currentGame = createGame({maxWords, users: _users.map(({user}) => user)});
+    if (!_player) {
+      // If player joins for the first time create a new entry
+      _players.push({user, status: 'active', totalScore: 0, currentScore: 0});
+    } else _player.status = 'active'; // otherwise update status
+
+    // If there are 2 active players a new game can start
+    if (activePlayers().length >= 2 && !currentGame) {
+      currentGame = createGame();
     }
   };
 
-  const retrieveCurrentGame = () => currentGame;
-
   const leave = (userId: string) => {
-    const user = _users.find(({user}) => user.userId === userId);
+    const user = _players.find(({user}) => user.getUserId() === userId);
     if (!user) throw Error('Can not leave room you never joined.');
 
     user.status = 'away';
 
-    if (activeUsers().length <= 1 && currentGame) {
-      const scoreBoard = currentGame?.retrieveScoreBoard();
-      if (!scoreBoard) throw Error('Missing scoreboard.');
-
-      _users.forEach(({user}) => {
-        const score = scoreBoard[user.userId];
-        user.addToScore(roomId, score);
-      });
-
+    if (activePlayers().length <= 1 && currentGame) {
       currentGame = undefined;
       return;
     }
 
     // reset all that are selected by leaving user
-    currentGame?.listWords().forEach((word) => {
-      if (word.retrieveSelectedBy() !== userId) return;
+    currentGame?.getWords().forEach((word) => {
+      if (word.getSelectedBy() !== userId) return;
       word.deselect(userId);
     });
   };
 
-  const retrieveUser = (userId: string) => {
-    return activeUsers().find(({user}) => user.userId === userId)?.user;
-  };
-
-  const activeUsers = () => {
-    return _users.filter(({status}) => status === 'active');
+  const activePlayers = () => {
+    return _players.filter(({status}) => status === 'active');
   };
 
   const sendChatMessage = (message: ChatMessage) => {
-    messages.push(message);
+    chatMessages.push(message);
   };
 
   const retrieveChatMessage = (messageId: string) => {
-    return messages.find((message) => message.chatMessageId === messageId);
+    return chatMessages.find((message) => message.chatMessageId === messageId);
   };
 
-  const listChatMessages = () => {
-    return messages;
-  };
+  const listChatMessages = () => chatMessages;
 
   return {
-    roomId,
-    roomTitle,
-    createdAt,
-    maxMembers,
-    maxWords,
-    retrieveCurrentGame,
+    getRoomId,
+    getRoomTitle,
+    getCurrentGame,
+
+    getPlayer,
+    getPlayers,
+    getHighScore,
 
     join,
     leave,
-
-    retrieveUser,
 
     sendChatMessage,
     retrieveChatMessage,

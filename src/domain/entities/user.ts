@@ -1,38 +1,22 @@
-import {ValidationError} from 'domain/ValidationError';
 import {v4 as uuid} from 'uuid';
+import {createUsername} from 'domain/valueObjects';
 
 export type User = {
-  userId: string;
-  username: string;
-  addToScore: (roomId: string, val: number) => void;
-  retrieveScore: (roomId: string) => number | undefined;
+  getUserId: () => string;
+  getUsername: () => string;
 };
 
-type InitialValues = {username: string; userId?: string};
+type InitialValues = {
+  userId?: string;
+  username: string;
+};
 export const createUser = (init: InitialValues): User => {
-  const {username, userId = uuid()} = init;
+  const {userId = uuid()} = init;
 
-  // - Validation
-  if (username.length < 3) {
-    throw new ValidationError('Username must be at least 3 characters long.');
-  }
+  const username = createUsername(init.username);
 
-  if (username.length > 30) {
-    throw new ValidationError('Username must be at max 30 characters long.');
-  }
+  const getUserId = () => userId;
+  const getUsername = () => username.value();
 
-  const _scores: {[roomId: string]: number} = {};
-
-  const addToScore = (roomId: string, val: number) => {
-    _scores[roomId] = (_scores[roomId] || 0) + val;
-  };
-
-  const retrieveScore = (roomId: string) => _scores[roomId];
-
-  return {
-    username,
-    userId,
-    addToScore,
-    retrieveScore,
-  };
+  return {getUsername, getUserId};
 };

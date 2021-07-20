@@ -9,7 +9,7 @@
     "start": "NODE_PATH=dist/ node dist/index.js",
     "build": "rimraf ./dist && tsc",
     "heroku-prebuild": "npm install --dev",
-    "test:unit": "npx jest --projects tests/unit/jest.config.js"
+    "test:unit": "npx jest --projects tests/unit/jest.config.js --detectOpenHandles"
   },
   "keywords": [],
   "author": "",

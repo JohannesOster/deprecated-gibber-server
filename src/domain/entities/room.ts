@@ -16,6 +16,7 @@ type Player = {
 export type Room = {
   getRoomId: () => string;
   getRoomTitle: () => string;
+  getTerminationDate: () => Date;
 
   getCurrentGame: () => Game | undefined;
 
@@ -35,6 +36,7 @@ export type Room = {
 type InitialValues = {
   roomId?: string;
   roomTitle: string;
+  terminationDate: Date;
 
   currentGame?: Game;
   players?: Player[];
@@ -44,12 +46,18 @@ type InitialValues = {
 export const createRoom = (init: InitialValues): Room => {
   const MAX_PLAYERS = 100;
 
-  const {roomId = uuid(), chatMessages = [], players: _players = []} = init;
+  const {
+    roomId = uuid(),
+    chatMessages = [],
+    players: _players = [],
+    terminationDate,
+  } = init;
   const roomTitle = createRoomTitle(init.roomTitle);
   let currentGame = init.currentGame;
 
   const getRoomId = () => roomId;
   const getRoomTitle = () => roomTitle.value();
+  const getTerminationDate = () => terminationDate;
 
   const getCurrentGame = () => currentGame;
 
@@ -92,6 +100,7 @@ export const createRoom = (init: InitialValues): Room => {
     user.status = 'away';
 
     if (activePlayers().length <= 1 && currentGame) {
+      // TODO update scores for players (totalScore += currentScore)
       currentGame = undefined;
       return;
     }
@@ -120,6 +129,7 @@ export const createRoom = (init: InitialValues): Room => {
   return {
     getRoomId,
     getRoomTitle,
+    getTerminationDate,
     getCurrentGame,
 
     getPlayer,

@@ -18,6 +18,7 @@ export const roomMapper: Mapper<ERoom, DBRoom, DTORoom> = {
         roomId: room.getRoomId(),
         roomTitle: room.getRoomTitle(),
         currentGameId: currentGame?.getGameId(),
+        terminationDate: room.getTerminationDate().toString(),
         players: room
           .getPlayers()
           .map(({status, totalScore, currentScore, user}) => ({
@@ -38,6 +39,7 @@ export const roomMapper: Mapper<ERoom, DBRoom, DTORoom> = {
     return createRoom({
       roomId: room.roomId,
       roomTitle: room.roomTitle,
+      terminationDate: new Date(room.terminationDate),
       currentGame: currentGame ? gameMapper.toDomain(currentGame) : undefined,
       players: room.players.map(({status, totalScore, currentScore, user}) => ({
         status,

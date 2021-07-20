@@ -5,29 +5,44 @@ import {createWord} from 'domain/entities/word';
 import {InvalidOperationError} from 'domain/InvalidOperationError';
 import {ValidationError} from 'domain/ValidationError';
 
+const tomorrow = () => {
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return tomorrow;
+};
+
 describe('room', () => {
   describe('factory', () => {
     it('throws on too short roomTitle', () => {
       const tooShortTitle = 'a';
-      const factory = () => createRoom({roomTitle: tooShortTitle});
+      const factory = () =>
+        createRoom({roomTitle: tooShortTitle, terminationDate: tomorrow()});
       expect(factory).toThrowError(ValidationError);
     });
 
     it('throws on too long roomTitle', () => {
       const tooLongTitle = 'abcdefghijklmnopqrstuvwxyz12345'; // 31 chars
-      const factory = () => createRoom({roomTitle: tooLongTitle});
+      const factory = () =>
+        createRoom({roomTitle: tooLongTitle, terminationDate: tomorrow()});
       expect(factory).toThrowError(ValidationError);
     });
 
     it('automatically assigns unique id', () => {
-      const room = createRoom({roomTitle: 'VO Debatten der Gender Studies'});
+      const room = createRoom({
+        roomTitle: 'VO Debatten der Gender Studies',
+        terminationDate: tomorrow(),
+      });
       expect(room.getRoomId()).toBeDefined();
     });
   });
 
   describe('join', () => {
     it('Adds user on join', () => {
-      const room = createRoom({roomTitle: 'VO Debatten der Gender Studies'});
+      const room = createRoom({
+        roomTitle: 'VO Debatten der Gender Studies',
+        terminationDate: tomorrow(),
+      });
       const user = createUser({username: 'Peter'});
 
       room.join(user);
@@ -36,7 +51,10 @@ describe('room', () => {
     });
 
     it('Starts new game if second person joins', () => {
-      const room = createRoom({roomTitle: 'VO Debatten der Gender Studies'});
+      const room = createRoom({
+        roomTitle: 'VO Debatten der Gender Studies',
+        terminationDate: tomorrow(),
+      });
       const peter = createUser({username: 'Peter'});
       const jonathan = createUser({username: 'Jonathan'});
 
@@ -49,7 +67,10 @@ describe('room', () => {
 
   describe('leave', () => {
     it('removes user on leave', () => {
-      const room = createRoom({roomTitle: 'VO Debatten der Gender Studies'});
+      const room = createRoom({
+        roomTitle: 'VO Debatten der Gender Studies',
+        terminationDate: tomorrow(),
+      });
       const user = createUser({username: 'Peter'});
       room.join(user);
 
@@ -58,7 +79,10 @@ describe('room', () => {
     });
 
     it('deselects words on leave', () => {
-      const room = createRoom({roomTitle: 'VO Debatten der Gender Studies'});
+      const room = createRoom({
+        roomTitle: 'VO Debatten der Gender Studies',
+        terminationDate: tomorrow(),
+      });
       const marianne = createUser({username: 'Marianne'});
       const markus = createUser({username: 'Markus'});
       const chantal = createUser({username: 'Chantal'});
@@ -82,7 +106,10 @@ describe('room', () => {
     });
 
     it('removes current game if only one player is rest', () => {
-      const room = createRoom({roomTitle: 'VO Debatten der Gender Studies'});
+      const room = createRoom({
+        roomTitle: 'VO Debatten der Gender Studies',
+        terminationDate: tomorrow(),
+      });
       const marianne = createUser({username: 'Marianne'});
       const markus = createUser({username: 'Markus'});
 
@@ -116,6 +143,7 @@ describe('room', () => {
     it('Throws if max members is reached', () => {
       const room = createRoom({
         roomTitle: 'VO Debatten der Gender Studies',
+        terminationDate: tomorrow(),
       });
 
       const addUser = () => room.join(createUser({username: 'Dumbledore'}));
@@ -133,6 +161,7 @@ describe('room', () => {
     it('adds new message on sendChatMessage', () => {
       const room = createRoom({
         roomTitle: 'VO Debatten der Gender Studies',
+        terminationDate: tomorrow(),
       });
       const user = createUser({username: 'Maria'});
       room.join(user);

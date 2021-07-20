@@ -17,6 +17,7 @@ describe('roomsRepository', () => {
       const room = createRoom({
         roomId: uuid(),
         roomTitle: 'VO Plastische Chirurgie',
+        terminationDate: new Date(),
       });
 
       await repo.save(room);

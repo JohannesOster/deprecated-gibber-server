@@ -53,6 +53,7 @@ export type Room = {
   room: {
     roomId: string;
     roomTitle: string;
+    terminationDate: string;
     currentGameId?: string;
     players: Player[];
     chatMessages: ChatMessage[];

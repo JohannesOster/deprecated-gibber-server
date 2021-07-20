@@ -11,13 +11,13 @@ import {Server} from 'socket.io';
 
 export const RoomsAdapter = (db: DBAccess) => {
   const create = httpReqHandler(async (req) => {
-    const {roomTitle} = req.body;
-    const room = createRoom({roomTitle});
-    return {body: await db.rooms.save(room)};
+    const {roomTitle, terminationDate} = req.body;
+    const room = createRoom({roomTitle, terminationDate});
+    return {body: await db.rooms.save(room).then(roomMapper.toDTO)};
   });
 
   const list = httpReqHandler(async () => ({
-    body: (await db.rooms.list()).map((room) => roomMapper.toDTO(room)),
+    body: (await db.rooms.list()).map(roomMapper.toDTO),
   }));
 
   const selectWord = socketEventHandler<string>(

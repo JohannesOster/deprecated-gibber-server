@@ -1,11 +1,12 @@
 import {createRoom, Room as ERoom} from 'domain/entities';
 import {Room as DBRoom} from 'infrastructure/db';
+import {Room as DTORoom} from 'infrastructure/dto';
 import {chatMessageMapper} from './chatMessageMapper';
 import {gameMapper} from './gameMapper';
 import {Mapper} from './types';
 import {userMapper} from './userMapper';
 
-export const roomMapper: Mapper<ERoom, DBRoom> = {
+export const roomMapper: Mapper<ERoom, DBRoom, DTORoom> = {
   toPersistence: (room) => {
     const currentGame = room.getCurrentGame();
     const currentGameMapped = currentGame
@@ -29,7 +30,7 @@ export const roomMapper: Mapper<ERoom, DBRoom> = {
           .listChatMessages()
           .map((message) => chatMessageMapper.toPersistence(message)),
       },
-      currentGame: currentGameMapped;
+      currentGame: currentGameMapped,
     };
   },
 
@@ -49,4 +50,9 @@ export const roomMapper: Mapper<ERoom, DBRoom> = {
       ),
     });
   },
+
+  toDTO: (room) => ({
+    roomId: room.getRoomId(),
+    roomTitle: room.getRoomTitle(),
+  }),
 };

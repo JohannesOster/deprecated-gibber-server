@@ -115,9 +115,7 @@ export const createRoom = (init: InitialValues): Room => {
     return chatMessages.find((message) => message.chatMessageId === messageId);
   };
 
-  const listChatMessages = () => {
-    return chatMessages;
-  };
+  const listChatMessages = () => chatMessages;
 
   return {
     getRoomId,

@@ -3,7 +3,7 @@ import {Game as DBGame} from 'infrastructure/db';
 import {Mapper} from './types';
 import {wordMapper} from './wordMapper';
 
-export const gameMapper: Mapper<EGame, DBGame> = {
+export const gameMapper: Mapper<EGame, DBGame, undefined> = {
   toPersistence: (game) => {
     return {
       gameId: game.getGameId(),
@@ -17,4 +17,6 @@ export const gameMapper: Mapper<EGame, DBGame> = {
       words: raw.words.map((word) => wordMapper.toDomain(word)),
     });
   },
+
+  toDTO: (game) => undefined,
 };

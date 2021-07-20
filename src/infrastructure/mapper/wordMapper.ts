@@ -1,8 +1,9 @@
 import {createWord, Word as EWord} from 'domain/entities';
 import {Word as DBWord} from 'infrastructure/db';
+import {Word as DTOWord} from 'infrastructure/dto';
 import {Mapper} from './types';
 
-export const wordMapper: Mapper<EWord, DBWord> = {
+export const wordMapper: Mapper<EWord, DBWord, DTOWord> = {
   toPersistence: (word) => {
     return {
       wordId: word.getWordId(),
@@ -11,7 +12,7 @@ export const wordMapper: Mapper<EWord, DBWord> = {
       status: word.getStatus(),
 
       acceptedBy: word.getAcceptedBy(),
-      deniedBy: word.getAcceptedBy(),
+      deniedBy: word.getDeniedBy(),
       upvotedBy: word.getUpvotedBy(),
       downvotedBy: word.getDownvotedBy(),
     };
@@ -30,4 +31,9 @@ export const wordMapper: Mapper<EWord, DBWord> = {
       downvotedBy: raw.downvotedBy,
     });
   },
+
+  toDTO: (word) => ({
+    wordId: word.getWordId(),
+    word: word.getWord(),
+  }),
 };

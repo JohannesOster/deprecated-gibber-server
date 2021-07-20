@@ -48,6 +48,10 @@ export const createEventHandlers = (
       handler: (args) => adapter.sendChatMessage(connectionDetils, args),
     },
     {
+      key: SocketEvent.requestChatMessages,
+      handler: (args) => adapter.requestChatMessages(connectionDetils, args),
+    },
+    {
       key: SocketEvent.disconnect,
       handler: async () => {
         const {roomId, userId, socketIOServer} = connectionDetils;

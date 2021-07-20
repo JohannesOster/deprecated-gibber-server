@@ -4,6 +4,7 @@ import {createRoom} from 'domain/entities/room';
 import {createWord} from 'domain/entities/word';
 import {DBAccess} from 'infrastructure/db';
 import {httpReqHandler} from 'infrastructure/httpServer/httpRequestHandler';
+import {roomMapper} from 'infrastructure/mapper/roomMapper';
 import {SocketEvent} from 'infrastructure/socketServer';
 import {socketEventHandler} from 'infrastructure/socketServer/socketEventHandler';
 import {Server} from 'socket.io';
@@ -15,7 +16,9 @@ export const RoomsAdapter = (db: DBAccess) => {
     return {body: await db.rooms.save(room)};
   });
 
-  const list = httpReqHandler(async () => ({body: await db.rooms.list()}));
+  const list = httpReqHandler(async () => ({
+    body: (await db.rooms.list()).map((room) => roomMapper.toDTO(room)),
+  }));
 
   const selectWord = socketEventHandler<string>(
     async ({roomId, userId, socketIOServer}, wordId) => {
@@ -203,6 +206,15 @@ export const RoomsAdapter = (db: DBAccess) => {
     },
   );
 
+  const requestChatMessages = socketEventHandler<undefined>(
+    async ({roomId, socket}) => {
+      const room = await db.rooms.findById(roomId);
+      if (!room) throw new Error('Room does not exist.');
+
+      socket.emit(SocketEvent.listChatMessages, room.listChatMessages());
+    },
+  );
+
   const _listWords = (
     socketIOServer: Server,
     roomId: string,
@@ -229,5 +241,6 @@ export const RoomsAdapter = (db: DBAccess) => {
     upvoteWord,
     downvote,
     sendChatMessage,
+    requestChatMessages,
   };
 };

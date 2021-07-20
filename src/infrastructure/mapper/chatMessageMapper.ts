@@ -1,8 +1,13 @@
 import {createChatMessage, ChatMessage as EChatMessage} from 'domain/entities';
 import {ChatMessage as DBChatMessage} from 'infrastructure/db';
+import {ChatMessage as DTOChatMessage} from 'infrastructure/dto';
 import {Mapper} from './types';
 
-export const chatMessageMapper: Mapper<EChatMessage, DBChatMessage> = {
+export const chatMessageMapper: Mapper<
+  EChatMessage,
+  DBChatMessage,
+  DTOChatMessage
+> = {
   toPersistence: (chatMessage) => {
     return {
       chatMessageId: chatMessage.chatMessageId,
@@ -20,4 +25,6 @@ export const chatMessageMapper: Mapper<EChatMessage, DBChatMessage> = {
       senderUsername: raw.senderUsername,
     });
   },
+
+  toDTO: (chatMessage) => chatMessage,
 };

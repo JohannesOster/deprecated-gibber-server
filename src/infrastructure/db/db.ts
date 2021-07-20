@@ -21,6 +21,14 @@ const createDB = (client: RedisClient): Database => {
         });
       });
     },
+    del: (key: string) => {
+      return new Promise((resolve, reject) => {
+        client.del(key, (error) => {
+          if (error) return reject(error);
+          resolve(undefined);
+        });
+      });
+    },
   };
 };
 

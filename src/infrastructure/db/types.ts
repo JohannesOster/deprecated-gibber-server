@@ -9,6 +9,7 @@ export interface DBAccess {
 export interface Database {
   get: <T>(key: string) => Promise<T | undefined>;
   set: <T>(key: string, value: T) => Promise<undefined>;
+  del: (key: string) => Promise<undefined>;
 }
 
 export type User = {

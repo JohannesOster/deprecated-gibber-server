@@ -100,7 +100,10 @@ export const createRoom = (init: InitialValues): Room => {
     user.status = 'away';
 
     if (activePlayers().length <= 1 && currentGame) {
-      // TODO update scores for players (totalScore += currentScore)
+      _players.forEach((player) => {
+        player.totalScore += player.currentScore;
+        player.currentScore = 0;
+      });
       currentGame = undefined;
       return;
     }

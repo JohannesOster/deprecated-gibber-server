@@ -121,22 +121,24 @@ describe('room', () => {
       expect(room.getCurrentGame()).toBeUndefined();
     });
 
-    // it('updates users scores if currentGame ends', () => {
-    //   const room = createRoom({roomTitle: 'VO Debatten der Gender Studies'});
-    //   const marianne = createUser({username: 'Marianne'});
-    //   const markus = createUser({username: 'Markus'});
+    it('updates users room / total-score if currentGame ends', () => {
+      const room = createRoom({
+        roomTitle: 'VO Debatten der Gender Studies',
+        terminationDate: new Date(),
+      });
+      const marianne = createUser({username: 'Marianne'});
+      const markus = createUser({username: 'Markus'});
 
-    //   room.join(marianne);
-    //   room.join(markus);
+      room.join(marianne);
+      room.join(markus);
 
-    //   const score = 50;
-    //   room.getPlayer(marianne.getUserId())!.currentScore = score;
+      const score = 50;
+      room.getPlayer(marianne.getUserId())!.currentScore = score;
 
-    //   room.leave(markus.getUserId());
+      room.leave(markus.getUserId());
 
-    //   expect(markus.(room.getRoomId())).toBe(0);
-    //   expect(marianne.retrieveScore(room.getRoomId())).toBe(score);
-    // });
+      expect(room.getPlayer(marianne.getUserId())?.totalScore).toBe(score);
+    });
   });
 
   describe('maxMembers', () => {

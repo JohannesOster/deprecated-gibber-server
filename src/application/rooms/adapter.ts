@@ -91,7 +91,7 @@ export const RoomsAdapter = (db: DBAccess) => {
 
         _listWords(socketIOServer, room.getRoomId(), currentGame);
 
-        // loop through each connected socker
+        // loop through each connected socket
         socketIOServer.sockets.sockets.forEach((socket) => {
           const handshake = socket.handshake.query;
           if ((handshake.roomId as string) !== room.getRoomId()) return;
@@ -226,6 +226,7 @@ export const RoomsAdapter = (db: DBAccess) => {
       status: word.getStatus(),
       points: word.getPoints(),
     }));
+
     socketIOServer.in(roomId).emit(SocketEvent.listWords, words);
   };
 

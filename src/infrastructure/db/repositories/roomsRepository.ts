@@ -43,6 +43,7 @@ export const RoomsRepository = (db: Database): TRoomsRepository => {
         return roomMapper.toDomain({room, currentGame});
       } catch (error) {
         console.error(error); // TODO: Reason behind error unknown
+        return Promise.resolve(roomMapper.toDomain({room}));
       }
     });
   };

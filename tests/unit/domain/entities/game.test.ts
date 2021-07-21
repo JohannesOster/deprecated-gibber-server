@@ -1,7 +1,7 @@
 import {createGame} from 'domain/entities/game';
 import {createWord} from 'domain/entities/word';
 
-describe('room', () => {
+describe('game', () => {
   describe('factory', () => {
     it('automatically assigns unique id', () => {
       const game = createGame();

@@ -5,7 +5,7 @@ import {SocketEvent} from './types';
 
 type EventHandler = {key: string; handler: (...args: any[]) => void};
 export const createEventHandlers = (
-  connectionDetils: ConnectionDetails,
+  connectionDetails: ConnectionDetails,
   db: DBAccess,
 ): EventHandler[] => {
   const adapter = RoomsAdapter(db);
@@ -13,48 +13,48 @@ export const createEventHandlers = (
   return [
     {
       key: SocketEvent.selectWord,
-      handler: (args) => adapter.selectWord(connectionDetils, args),
+      handler: (args) => adapter.selectWord(connectionDetails, args),
     },
     {
       key: SocketEvent.deselectWord,
-      handler: (args) => adapter.deselectWord(connectionDetils, args),
+      handler: (args) => adapter.deselectWord(connectionDetails, args),
     },
     {
       key: SocketEvent.claimWord,
-      handler: (args) => adapter.claimWord(connectionDetils, args),
+      handler: (args) => adapter.claimWord(connectionDetails, args),
     },
     {
       key: SocketEvent.acceptClaim,
-      handler: (args) => adapter.acceptClaim(connectionDetils, args),
+      handler: (args) => adapter.acceptClaim(connectionDetails, args),
     },
     {
       key: SocketEvent.denyClaim,
-      handler: (args) => adapter.denyClaim(connectionDetils, args),
+      handler: (args) => adapter.denyClaim(connectionDetails, args),
     },
     {
       key: SocketEvent.addWord,
-      handler: (args) => adapter.addWord(connectionDetils, args),
+      handler: (args) => adapter.addWord(connectionDetails, args),
     },
     {
       key: SocketEvent.upvoteWord,
-      handler: (args) => adapter.upvoteWord(connectionDetils, args),
+      handler: (args) => adapter.upvoteWord(connectionDetails, args),
     },
     {
       key: SocketEvent.downvoteWord,
-      handler: (args) => adapter.downvote(connectionDetils, args),
+      handler: (args) => adapter.downvote(connectionDetails, args),
     },
     {
       key: SocketEvent.sendChatMessage,
-      handler: (args) => adapter.sendChatMessage(connectionDetils, args),
+      handler: (args) => adapter.sendChatMessage(connectionDetails, args),
     },
     {
       key: SocketEvent.requestChatMessages,
-      handler: (args) => adapter.requestChatMessages(connectionDetils, args),
+      handler: (args) => adapter.requestChatMessages(connectionDetails, args),
     },
     {
       key: SocketEvent.disconnect,
       handler: async () => {
-        const {roomId, userId, socketIOServer} = connectionDetils;
+        const {roomId, userId, socketIOServer} = connectionDetails;
         const room = await db.rooms.findById(roomId);
         if (!room) return;
         room.leave(userId);

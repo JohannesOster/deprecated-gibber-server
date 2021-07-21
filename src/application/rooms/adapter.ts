@@ -215,6 +215,35 @@ export const RoomsAdapter = (db: DBAccess) => {
     },
   );
 
+  const leave = socketEventHandler<undefined>(
+    async ({roomId, userId, socketIOServer}) => {
+      const room = await db.rooms.findById(roomId);
+      if (!room) throw new Error('Room does not exist.');
+
+      room.leave(userId);
+      db.rooms.save(room);
+
+      const currentGame = room.getCurrentGame();
+      if (!currentGame) {
+        if (new Date() > room.getTerminationDate()) {
+          console.log('delete room');
+          db.rooms.del(room.getRoomId());
+        }
+
+        return;
+      }
+
+      const words = currentGame.getWords().map((word) => ({
+        word: word.getWord(),
+        wordId: word.getWordId(),
+        status: word.getStatus(),
+        points: word.getPoints(),
+      }));
+
+      socketIOServer.in(roomId).emit(SocketEvent.listWords, words);
+    },
+  );
+
   const _listWords = (
     socketIOServer: Server,
     roomId: string,
@@ -243,5 +272,6 @@ export const RoomsAdapter = (db: DBAccess) => {
     downvote,
     sendChatMessage,
     requestChatMessages,
+    leave,
   };
 };

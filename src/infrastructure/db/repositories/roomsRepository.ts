@@ -2,10 +2,12 @@ import {Repository} from './types';
 import {Room as ERoom} from 'domain/entities/room';
 import {Database, Game, Room as DBRoom, Room} from '../types';
 import {roomMapper} from 'infrastructure/mapper/roomMapper';
+import {DefaultDeserializer} from 'node:v8';
 
 type TRoomsRepository = Repository<ERoom> & {
   findById: (userId: string) => Promise<ERoom | undefined>;
   list: () => Promise<ERoom[]>;
+  del: (roomId: string) => Promise<undefined>;
 };
 
 export const RoomsRepository = (db: Database): TRoomsRepository => {
@@ -16,16 +18,6 @@ export const RoomsRepository = (db: Database): TRoomsRepository => {
       if (!rooms) return [];
       return Array.isArray(rooms) ? rooms : [rooms];
     });
-    // .then(async (rooms) => {
-    //   return await Promise.all(
-    //     rooms.map(async (room) => {
-    //       let currentGame = await (room.currentGameId
-    //         ? db.get<Game>(room.currentGameId)
-    //         : Promise.resolve(undefined));
-    //       return {room, currentGame};
-    //     }),
-    //   );
-    // });
   };
 
   const findById = async (roomId: string) => {
@@ -93,5 +85,11 @@ export const RoomsRepository = (db: Database): TRoomsRepository => {
 
     return db.set(DB_KEY, rooms).then(() => room);
   };
-  return {save, list, findById};
+
+  const del = async (roomId: string) => {
+    const rooms = (await all()).filter((room) => room.roomId !== roomId);
+    return db.set(DB_KEY, rooms).then(() => undefined);
+  };
+
+  return {save, list, findById, del};
 };

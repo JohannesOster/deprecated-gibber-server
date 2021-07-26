@@ -1,20 +1,9 @@
-import express from 'express';
-import cors from 'cors';
-import {createServer as createHTTPServer} from 'http';
-import {createSocketServer} from './createSocketServer';
-import {errorHandler, notFound} from './middlewares';
-import {routes as RoomsRouter} from './routes/rooms';
+import {DBAccess} from './db';
+import {createHttpServer} from './httpServer';
+import {initializeSocketServer} from './socketServer';
 
-const app = express();
-const server = createHTTPServer(app);
-createSocketServer(server);
-
-app.use(express.json());
-app.use(cors());
-
-app.use('/rooms', RoomsRouter);
-
-app.use(notFound);
-app.use(errorHandler);
-
-export default server;
+export const createServer = (db: DBAccess) => {
+  const server = createHttpServer(db);
+  initializeSocketServer(server, db);
+  return server;
+};

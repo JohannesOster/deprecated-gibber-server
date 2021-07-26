@@ -1,23 +1,22 @@
 import {v4 as uuid} from 'uuid';
+import {createUsername} from 'domain/valueObjects';
 
 export type User = {
-  userId: string;
-  username: string;
-  score: number;
-  increaseScore: (val?: number) => void;
-  decreaseScore: (val?: number) => void;
+  getUserId: () => string;
+  getUsername: () => string;
 };
 
-export const createUser = (username: string, userId: string = uuid()): User => {
-  return {
-    username,
-    userId,
-    score: 0,
-    increaseScore: function (val: number = 1) {
-      this.score += val;
-    },
-    decreaseScore: function (val: number = 2) {
-      this.score -= val;
-    },
-  };
+type InitialValues = {
+  userId?: string;
+  username: string;
+};
+export const createUser = (init: InitialValues): User => {
+  const {userId = uuid()} = init;
+
+  const username = createUsername(init.username);
+
+  const getUserId = () => userId;
+  const getUsername = () => username.value();
+
+  return {getUsername, getUserId};
 };

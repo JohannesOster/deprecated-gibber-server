@@ -1,9 +1,12 @@
-import server from 'infrastructure/server';
-import pino from 'pino';
+import {db} from 'infrastructure/db';
+import {createServer} from 'infrastructure/server';
 
-const logger = pino();
+db.init().then((db) => {
+  const port = process.env.PORT || 3000;
 
-const port = process.env.PORT || 3000;
-server.listen(port, () => {
-  logger.info(`Listening on port ${port}`);
+  const server = createServer(db);
+
+  server.listen(port, () => {
+    console.info(`Listening on port ${port}`);
+  });
 });

@@ -1,147 +1,149 @@
+import {InvalidOperationError} from 'domain/InvalidOperationError';
+import {createRoomTitle} from 'domain/valueObjects/roomTitle';
 import {v4 as uuid} from 'uuid';
+import {ChatMessage} from './chatMessage';
+import {createGame, Game} from './game';
 import {User} from './user';
-import {Word} from './word';
 
-export type Room = {
-  roomId: string;
-  roomTitle: string;
-  join: (user: User) => void;
-  leave: (userId: string) => void;
-  select: (userId: string, wordId: string) => void;
-  deselect: (userId: string, wordId: string) => void;
-  claim: (userId: string, wordId: string) => void;
-  accept: (userId: string, wordId: string) => void;
-  deny: (userId: string, wordId: string) => void;
-  reset: (wordId: string) => void;
-  listUsers: () => User[];
-  listWords: () => Word[];
-  retrieveUser: (userId: string) => User | undefined;
-  retrieveWord: (wordId: string) => Word | undefined;
-  addWord: (word: Word) => void;
-  upvote: (wordId: string) => void;
-  downvote: (wordId: string) => void;
+type PlayerStatus = 'active' | 'away';
+type Player = {
+  status: PlayerStatus;
+  currentScore: number;
+  totalScore: number;
+  user: User;
 };
 
-export const createRoom = (
-  init: {roomTitle?: string; roomId?: string; words?: Word[]} = {},
-): Room => {
-  const MAX_WORDS = 100;
+export type Room = {
+  getRoomId: () => string;
+  getRoomTitle: () => string;
+  getTerminationDate: () => Date;
 
-  const {roomId = uuid(), roomTitle = '', words: _words = []} = init;
+  getCurrentGame: () => Game | undefined;
 
-  const _users: User[] = [];
+  getPlayer: (userId: string) => Player | undefined;
+  getPlayers: () => Player[];
 
-  const listUsers = () => {
-    return _users.sort((a, b) => {
-      if (a.score > b.score) return -1;
-      if (a.score < b.score) return 1;
-      return a.username > b.username ? 1 : -1;
-    });
+  getHighScore: () => number;
+
+  join: (user: User) => void;
+  leave: (userId: string) => void;
+
+  sendChatMessage: (message: ChatMessage) => void;
+  retrieveChatMessage: (messageId: string) => ChatMessage | undefined;
+  listChatMessages: () => ChatMessage[];
+};
+
+type InitialValues = {
+  roomId?: string;
+  roomTitle: string;
+  terminationDate: Date;
+
+  currentGame?: Game;
+  players?: Player[];
+  chatMessages?: ChatMessage[];
+};
+
+export const createRoom = (init: InitialValues): Room => {
+  const MAX_PLAYERS = 100;
+
+  const {
+    roomId = uuid(),
+    chatMessages = [],
+    players: _players = [],
+    terminationDate,
+  } = init;
+  const roomTitle = createRoomTitle(init.roomTitle);
+  let currentGame = init.currentGame;
+
+  const getRoomId = () => roomId;
+  const getRoomTitle = () => roomTitle.value();
+  const getTerminationDate = () => terminationDate;
+
+  const getCurrentGame = () => currentGame;
+
+  const getPlayers = () => _players;
+  const getPlayer = (userId: string) => {
+    return activePlayers().find(({user}) => user.getUserId() === userId);
+  };
+
+  const getHighScore = () => {
+    const scores = _players.map(({currentScore}) => currentScore);
+    return Math.max(...scores);
   };
 
   const join = (user: User) => {
-    _users.push(user);
+    if (_players.length >= MAX_PLAYERS) {
+      throw new InvalidOperationError(
+        `Maximal amount of members (=${MAX_PLAYERS}) reached. Cannot join.`,
+      );
+    }
+
+    const _player = _players.find(
+      ({user: u}) => u.getUserId() === user.getUserId(),
+    );
+
+    if (!_player) {
+      // If player joins for the first time create a new entry
+      _players.push({user, status: 'active', totalScore: 0, currentScore: 0});
+    } else _player.status = 'active'; // otherwise update status
+
+    // If there are 2 active players a new game can start
+    if (activePlayers().length >= 2 && !currentGame) {
+      currentGame = createGame();
+    }
   };
 
   const leave = (userId: string) => {
-    const idx = _users.findIndex((_user) => _user.userId === userId);
-    if (idx === -1) return;
+    const user = _players.find(({user}) => user.getUserId() === userId);
+    if (!user) throw Error('Can not leave room you never joined.');
 
-    _users.splice(idx, 1);
+    user.status = 'away';
 
-    // reset all words
-    _words.forEach((word) => {
-      if (word.selectedBy !== userId) return;
-      word.deselect();
-      word.score = 0;
+    if (activePlayers().length <= 1 && currentGame) {
+      _players.forEach((player) => {
+        player.totalScore += player.currentScore;
+        player.currentScore = 0;
+      });
+      currentGame = undefined;
+      return;
+    }
+
+    // reset all that are selected by leaving user
+    currentGame?.getWords().forEach((word) => {
+      if (word.getSelectedBy() !== userId) return;
+      word.deselect(userId);
     });
   };
 
-  const select = (userId: string, wordId: string) => {
-    _words.forEach((_word) => {
-      if (_word.selectedBy !== userId && _word.wordId !== wordId) return;
-      _word.wordId === wordId ? _word.select(userId) : _word.deselect();
-    });
+  const activePlayers = () => {
+    return _players.filter(({status}) => status === 'active');
   };
 
-  const deselect = (userId: string, wordId: string) => {
-    for (let i = 0; i < _words.length; i++) {
-      if (_words[i].wordId !== wordId) continue;
-      _words[i].deselect();
-      break;
-    }
+  const sendChatMessage = (message: ChatMessage) => {
+    chatMessages.push(message);
   };
 
-  const claim = (userId: string, wordId: string) => {
-    for (let i = 0; i < _words.length; i++) {
-      if (_words[i].wordId !== wordId) continue;
-      if (_words[i].selectedBy !== userId) break;
-      _words[i].claim();
-      break;
-    }
+  const retrieveChatMessage = (messageId: string) => {
+    return chatMessages.find((message) => message.chatMessageId === messageId);
   };
 
-  const accept = (userId: string, wordId: string) => {
-    for (let i = 0; i < _words.length; i++) {
-      if (_words[i].wordId !== wordId) continue;
-      _words[i].accept();
-      break;
-    }
-  };
-
-  const deny = (userId: string, wordId: string) => {
-    for (let i = 0; i < _words.length; i++) {
-      if (_words[i].wordId !== wordId) continue;
-      _words[i].deny();
-      break;
-    }
-  };
-
-  const sortWords = () => {
-    _words.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-  };
-
-  const upvote = (wordId: string) =>
-    _words.find((word) => word.wordId === wordId)?.upvote();
-  const downvote = (wordId: string) =>
-    _words.find((word) => word.wordId === wordId)?.downvote();
+  const listChatMessages = () => chatMessages;
 
   return {
-    roomId,
-    roomTitle,
-    listUsers,
+    getRoomId,
+    getRoomTitle,
+    getTerminationDate,
+    getCurrentGame,
+
+    getPlayer,
+    getPlayers,
+    getHighScore,
+
     join,
     leave,
-    select,
-    deselect,
-    claim,
-    accept,
-    deny,
-    upvote,
-    downvote,
-    reset: (wordId: string) => {
-      for (let i = 0; i < _words.length; i++) {
-        if (_words[i].wordId !== wordId) continue;
-        _words[i].reset();
-        break;
-      }
-    },
-    retrieveUser: function (userId: string) {
-      return _users.find((_user) => _user.userId === userId);
-    },
-    retrieveWord: function (wordId: string) {
-      return _words.find((_word) => _word.wordId === wordId);
-    },
-    listWords: () => {
-      sortWords();
-      return _words;
-    },
-    addWord: (word) => {
-      _words.push(word);
-      sortWords();
-      if (_words.length >= MAX_WORDS) {
-        _words.pop();
-      }
-    },
+
+    sendChatMessage,
+    retrieveChatMessage,
+    listChatMessages,
   };
 };

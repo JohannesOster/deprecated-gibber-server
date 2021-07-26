@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "NODE_ENV=development ts-node-dev -r tsconfig-paths/register --respawn --ignore-watch node_modules ./src/index.ts",
     "db-setup": "NODE_ENV=development ts-node-dev -r tsconfig-paths/register --respawn --ignore-watch node_modules ./src/infrastructure/db/createAll.ts",
-    "start": "NODE_PATH=dist/ node dist/index.js",
+    "start": "NODE_PATH=dist/src node dist/src/index.js",
     "build": "rimraf ./dist && tsc",
     "heroku-prebuild": "npm install --dev",
     "test:unit": "npx jest --projects tests/unit/jest.config.js --detectOpenHandles"

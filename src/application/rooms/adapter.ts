@@ -226,8 +226,11 @@ export const RoomsAdapter = (db: DBAccess) => {
       const currentGame = room.getCurrentGame();
       if (!currentGame) {
         if (new Date() > room.getTerminationDate()) {
-          console.log('delete room');
           db.rooms.del(room.getRoomId());
+        } else {
+          socketIOServer
+            .in(roomId)
+            .emit(SocketEvent.retrieveRoomStatus, 'onHold');
         }
 
         return;

@@ -26,13 +26,7 @@ export const initializeSocketServer = (
 
       socket.join(room.getRoomId());
       socket.emit(SocketEvent.connected, user); // successfully connected
-      // room.sendChatMessage(
-      //   createChatMessage({
-      //     senderUserId: user.getUserId(),
-      //     senderUsername: user.getUsername(),
-      //     message: 'Testnmessage',
-      //   }),
-      // );
+
       // connect event handlers
       const cDetails: ConnectionDetails = {
         socketIOServer,
@@ -44,6 +38,14 @@ export const initializeSocketServer = (
       eventHandlers.forEach(({key, handler}) => socket.on(key, handler));
       // initial steps after joining a room
       const currentGame = room.getCurrentGame();
+
+      socketIOServer
+        .in(roomId)
+        .emit(
+          SocketEvent.retrieveRoomStatus,
+          currentGame ? 'active' : 'onHold',
+        );
+
       if (!currentGame) return;
       socket.emit(SocketEvent.retrieveScore, {
         highScore: room.getHighScore(),
